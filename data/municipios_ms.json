@@ -1,0 +1,663 @@
+{
+  "oficial": true,
+  "gerado_em": "2026-11-17T01:43:21",
+  "fontes": {
+    "planilha": "Transparências MS completo.xlsx",
+    "pdf": "REGIÕES 2026.pdf"
+  },
+  "fiscais_fixos": [
+    {
+      "nome": "Campo Grande",
+      "grupo": "Fiscais Fixos",
+      "url": "https://transparencia.campogrande.ms.gov.br/",
+      "fornecedor_planilha": "",
+      "plataforma": "Outros"
+    },
+    {
+      "nome": "Dourados",
+      "grupo": "Fiscais Fixos",
+      "url": "https://transparencia.betha.cloud/#/yJ9y3J_D09niojsx99D7Dw==",
+      "fornecedor_planilha": "",
+      "plataforma": "Betha Cloud"
+    },
+    {
+      "nome": "Paranaíba",
+      "grupo": "Fiscais Fixos",
+      "url": "http://45.184.83.32:8079/Transparencia/",
+      "fornecedor_planilha": "",
+      "plataforma": "SCPI"
+    },
+    {
+      "nome": "Três Lagoas",
+      "grupo": "Fiscais Fixos",
+      "url": "http://pmtreslagoas.rcmsuporte.com.br:8079/transparencia/",
+      "fornecedor_planilha": "",
+      "plataforma": "SCPI"
+    }
+  ],
+  "regioes": {
+    "1": {
+      "nome": "Região 1",
+      "municipios": [
+        {
+          "nome": "Angélica",
+          "grupo": "Região 1",
+          "url": "https://transparencia.betha.cloud/#/3CsimkdlAFWc2SxNasIRBA==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        },
+        {
+          "nome": "Ivinhema",
+          "grupo": "Região 1",
+          "url": "https://transparencia.ivinhema.ms.gov.br/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Glória de Dourados",
+          "grupo": "Região 1",
+          "url": "http://177.73.106.211:5656/Transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Deodápolis",
+          "grupo": "Região 1",
+          "url": "https://transparencia.betha.cloud/#/whlvWPlYqIFeODuQD0dKgA==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        }
+      ]
+    },
+    "2": {
+      "nome": "Região 2",
+      "municipios": [
+        {
+          "nome": "Terenos",
+          "grupo": "Região 2",
+          "url": "https://web.qualitysistemas.com.br/portal/transparencia_publica/prefeitura_municipal_de_terenos",
+          "fornecedor_planilha": "",
+          "plataforma": "Quality"
+        },
+        {
+          "nome": "Dois Irmãos do Buriti",
+          "grupo": "Região 2",
+          "url": "http://transparencia.doisirmaosdoburiti.ms.gov.br:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Aquidauana",
+          "grupo": "Região 2",
+          "url": "https://e-gov.betha.com.br/transparencia/01037-173/recursos.faces?mun=tR-qJvZ6sQY=",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha e-Gov"
+        },
+        {
+          "nome": "Anastácio",
+          "grupo": "Região 2",
+          "url": "https://anastacio.megasofttransparencia.com.br/",
+          "fornecedor_planilha": "",
+          "plataforma": "Megasoft"
+        }
+      ]
+    },
+    "3": {
+      "nome": "Região 3",
+      "municipios": [
+        {
+          "nome": "Bonito",
+          "grupo": "Região 3",
+          "url": "http://45.188.183.155:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Bela Vista",
+          "grupo": "Região 3",
+          "url": "http://191.5.174.198:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Porto Murtinho",
+          "grupo": "Região 3",
+          "url": "https://transparencia.betha.cloud/#/kIdPsun3fy4mlxw5ndcItQ==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        },
+        {
+          "nome": "Caracol",
+          "grupo": "Região 3",
+          "url": "https://web.qualitysistemas.com.br/portal/transparencia_publica/prefeitura_municipal_de_caracol",
+          "fornecedor_planilha": "",
+          "plataforma": "Quality"
+        }
+      ]
+    },
+    "4": {
+      "nome": "Região 4",
+      "municipios": [
+        {
+          "nome": "Corumbá",
+          "grupo": "Região 4",
+          "url": "https://scpi.corumba.ms.gov.br/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Ladário",
+          "grupo": "Região 4",
+          "url": "https://www.ladario.ms.gov.br/portal/transparencia",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Miranda",
+          "grupo": "Região 4",
+          "url": "http://168.228.168.93:5656/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Bodoquena",
+          "grupo": "Região 4",
+          "url": "https://transparencia.betha.cloud/#/9thTqEHpf4m-Nn7nTliYbw==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        }
+      ]
+    },
+    "5": {
+      "nome": "Região 5",
+      "municipios": [
+        {
+          "nome": "Costa Rica",
+          "grupo": "Região 5",
+          "url": "http://pmcostarica.rcmsuporte.com.br:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Chapadão do Sul",
+          "grupo": "Região 5",
+          "url": "https://pmchapadao.rcmsuporte.com.br/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Paraíso das Águas",
+          "grupo": "Região 5",
+          "url": "http://170.81.37.97:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        }
+      ]
+    },
+    "6": {
+      "nome": "Região 6",
+      "municipios": [
+        {
+          "nome": "Coxim",
+          "grupo": "Região 6",
+          "url": "http://pmcoxim.rcmsuporte.com.br:8079/transparencia/Default.aspx",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Sonora",
+          "grupo": "Região 6",
+          "url": "http://pmsonora.rcmsuporte.com.br:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Pedro Gomes",
+          "grupo": "Região 6",
+          "url": "http://45.6.108.122:5656/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Alcinópolis",
+          "grupo": "Região 6",
+          "url": "http://45.173.125.13:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        }
+      ]
+    },
+    "7": {
+      "nome": "Região 7",
+      "municipios": [
+        {
+          "nome": "Fátima do Sul",
+          "grupo": "Região 7",
+          "url": "https://e-gov.betha.com.br/transparencia/01037-173/recursos.faces?mun=jIUn5a88xr8=",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha e-Gov"
+        },
+        {
+          "nome": "Vicentina",
+          "grupo": "Região 7",
+          "url": "http://portaltransparenciavicentina.ddns.com.br/",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Jateí",
+          "grupo": "Região 7",
+          "url": "https://transparencia-ocmblue.com.br/jatei",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Itaporã",
+          "grupo": "Região 7",
+          "url": "https://transparencia.itapora.ms.gov.br/Transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Douradina",
+          "grupo": "Região 7",
+          "url": "http://portaltransparenciadouradina.ddns.com.br/",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        }
+      ]
+    },
+    "8": {
+      "nome": "Região 8",
+      "municipios": [
+        {
+          "nome": "São Gabriel do Oeste",
+          "grupo": "Região 8",
+          "url": "https://appsaogabriel.rcmsuporte.com.br:8086/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Rio Verde de Mato Grosso",
+          "grupo": "Região 8",
+          "url": "https://transparencia.betha.cloud/#/KlxQinrZBH80Uqv9BDVJaw==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        },
+        {
+          "nome": "Camapuã",
+          "grupo": "Região 8",
+          "url": "https://web.qualitysistemas.com.br/portal/municipio_de_camapua",
+          "fornecedor_planilha": "",
+          "plataforma": "Quality"
+        },
+        {
+          "nome": "Figueirão",
+          "grupo": "Região 8",
+          "url": "https://www.figueirao.ms.gov.br/portal-da-transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        }
+      ]
+    },
+    "9": {
+      "nome": "Região 9",
+      "municipios": [
+        {
+          "nome": "Nova Andradina",
+          "grupo": "Região 9",
+          "url": "https://transparencia.betha.cloud/#/xBsjdcJl2sm6vP6blTxkvw==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        },
+        {
+          "nome": "Batayporã",
+          "grupo": "Região 9",
+          "url": "https://www.publicacoesmunicipais.inf.br/transparencia/bataypora",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Taquarussu",
+          "grupo": "Região 9",
+          "url": "https://transparencia.betha.cloud/#/_VQj5BoEPGmm_VeoePaAKg==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        },
+        {
+          "nome": "Novo Horizonte do Sul",
+          "grupo": "Região 9",
+          "url": "https://transparencia.betha.cloud/#/i6nD94jVj-R0_tWK4pLJiQ==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        }
+      ]
+    },
+    "10": {
+      "nome": "Região 10",
+      "municipios": [
+        {
+          "nome": "Ponta Porã",
+          "grupo": "Região 10",
+          "url": "https://contabilidade.pontapora.ms.gov.br/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Antônio João",
+          "grupo": "Região 10",
+          "url": "https://web.qualitysistemas.com.br/portal/transparencia_publica/prefeitura_municipal_de_antonio_joao",
+          "fornecedor_planilha": "",
+          "plataforma": "Quality"
+        },
+        {
+          "nome": "Aral Moreira",
+          "grupo": "Região 10",
+          "url": "http://177.73.104.13:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Maracaju",
+          "grupo": "Região 10",
+          "url": "https://www.maracaju.ms.gov.br/portal/transparencia",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        }
+      ]
+    },
+    "11": {
+      "nome": "Região 11",
+      "municipios": [
+        {
+          "nome": "Rio Brilhante",
+          "grupo": "Região 11",
+          "url": "https://transparencia.betha.cloud/#/KLojapoJwJLapEYmhbLUHQ==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        },
+        {
+          "nome": "Nova Alvorada do Sul",
+          "grupo": "Região 11",
+          "url": "https://transparencia.novaalvoradadosul.ms.gov.br/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Ribas do Rio Pardo",
+          "grupo": "Região 11",
+          "url": "http://45.174.220.245:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Água Clara",
+          "grupo": "Região 11",
+          "url": "http://45.183.236.226:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        }
+      ]
+    },
+    "12": {
+      "nome": "Região 12",
+      "municipios": [
+        {
+          "nome": "Jaraguari",
+          "grupo": "Região 12",
+          "url": "http://pmjaraguari.rcmsuporte.com.br:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Bandeirantes",
+          "grupo": "Região 12",
+          "url": "https://web.qualitysistemas.com.br/portal/prefeitura_municipal_de_bandeirantes",
+          "fornecedor_planilha": "",
+          "plataforma": "Quality"
+        },
+        {
+          "nome": "Rio Negro",
+          "grupo": "Região 12",
+          "url": "https://web.qualitysistemas.com.br/portal/transparencia_publica/prefeitura_municipal_de_rio_negro",
+          "fornecedor_planilha": "",
+          "plataforma": "Quality"
+        },
+        {
+          "nome": "Corguinho",
+          "grupo": "Região 12",
+          "url": "https://web.qualitysistemas.com.br/portal/transparencia_publica/prefeitura_municipal_de_corguinho",
+          "fornecedor_planilha": "",
+          "plataforma": "Quality"
+        },
+        {
+          "nome": "Rochedo",
+          "grupo": "Região 12",
+          "url": "https://web.qualitysistemas.com.br/contratos_e_convenios/prefeitura_municipal_de_rochedo",
+          "fornecedor_planilha": "",
+          "plataforma": "Quality"
+        }
+      ]
+    },
+    "13": {
+      "nome": "Região 13",
+      "municipios": [
+        {
+          "nome": "Sidrolândia",
+          "grupo": "Região 13",
+          "url": "http://187.6.86.78:5656/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Nioaque",
+          "grupo": "Região 13",
+          "url": "https://web.qualitysistemas.com.br/portal/transparencia_publica/prefeitura_municipal_de_nioaque",
+          "fornecedor_planilha": "",
+          "plataforma": "Quality"
+        },
+        {
+          "nome": "Jardim",
+          "grupo": "Região 13",
+          "url": "http://200.209.160.172:4545/index",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Guia Lopes da Laguna",
+          "grupo": "Região 13",
+          "url": "http://45.171.204.95:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        }
+      ]
+    },
+    "14": {
+      "nome": "Região 14",
+      "municipios": [
+        {
+          "nome": "Amambai",
+          "grupo": "Região 14",
+          "url": "http://177.67.190.178:5656/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Coronel Sapucaia",
+          "grupo": "Região 14",
+          "url": "https://coronelsapucaia.rcmsuporte.com.br:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Paranhos",
+          "grupo": "Região 14",
+          "url": "http://45.179.174.190:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Sete Quedas",
+          "grupo": "Região 14",
+          "url": "http://transparencia.setequedas.ms.gov.br:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Tacuru",
+          "grupo": "Região 14",
+          "url": "https://tacuru.megasofttransparencia.com.br/",
+          "fornecedor_planilha": "",
+          "plataforma": "Megasoft"
+        }
+      ]
+    },
+    "15": {
+      "nome": "Região 15",
+      "municipios": [
+        {
+          "nome": "Iguatemi",
+          "grupo": "Região 15",
+          "url": "https://www.portalcr2.com.br/entidade/iguatemi",
+          "fornecedor_planilha": "",
+          "plataforma": "CR2"
+        },
+        {
+          "nome": "Itaquiraí",
+          "grupo": "Região 15",
+          "url": "https://e-gov.betha.com.br/transparencia/01037-173/recursos.faces?mun=QKBgJkx3Atw=",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha e-Gov"
+        },
+        {
+          "nome": "Eldorado",
+          "grupo": "Região 15",
+          "url": "https://scpi.eldorado.rcmsuporte.com.br/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Mundo Novo",
+          "grupo": "Região 15",
+          "url": "https://transparencia.betha.cloud/#/S0vZYp2x1AO4UFMuI6vo6w==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        },
+        {
+          "nome": "Japorã",
+          "grupo": "Região 15",
+          "url": "http://181.191.195.74:5656/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        }
+      ]
+    },
+    "16": {
+      "nome": "Região 16",
+      "municipios": [
+        {
+          "nome": "Naviraí",
+          "grupo": "Região 16",
+          "url": "https://transparencia.navirai.ms.gov.br/",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        },
+        {
+          "nome": "Laguna Carapã",
+          "grupo": "Região 16",
+          "url": "https://transparencia.betha.cloud/#/Qamj9G2f8WhljKQKjl9BnQ==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        },
+        {
+          "nome": "Caarapó",
+          "grupo": "Região 16",
+          "url": "https://transparencia.betha.cloud/#/61M0eJ_21GlQw6p7f3svmg==",
+          "fornecedor_planilha": "",
+          "plataforma": "Betha Cloud"
+        },
+        {
+          "nome": "Juti",
+          "grupo": "Região 16",
+          "url": "http://177.73.104.96:5656/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        }
+      ]
+    },
+    "17": {
+      "nome": "Região 17",
+      "municipios": [
+        {
+          "nome": "Aparecida do Taboado",
+          "grupo": "Região 17",
+          "url": "http://143.0.127.202:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Selvíria",
+          "grupo": "Região 17",
+          "url": "http://45.186.221.158:5656/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Cassilândia",
+          "grupo": "Região 17",
+          "url": "http://45.189.53.3:8076/transparencia/#",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Inocência",
+          "grupo": "Região 17",
+          "url": "http://179.125.63.161:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        }
+      ]
+    },
+    "18": {
+      "nome": "Região 18",
+      "municipios": [
+        {
+          "nome": "Brasilândia",
+          "grupo": "Região 18",
+          "url": "http://187.17.197.14:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Santa Rita do Pardo",
+          "grupo": "Região 18",
+          "url": "https://santaritadopardo.cr2.site/",
+          "fornecedor_planilha": "",
+          "plataforma": "CR2"
+        },
+        {
+          "nome": "Bataguassu",
+          "grupo": "Região 18",
+          "url": "http://45.182.157.6:8079/transparencia/",
+          "fornecedor_planilha": "",
+          "plataforma": "SCPI"
+        },
+        {
+          "nome": "Anaurilândia",
+          "grupo": "Região 18",
+          "url": "http://portaltransparenciaanaurilandia.ddns.com.br:8181/",
+          "fornecedor_planilha": "",
+          "plataforma": "Outros"
+        }
+      ]
+    }
+  },
+  "nao_mapeados": [],
+  "pendencias": [],
+  "resumo": {
+    "fiscais_fixos": 4,
+    "municipios_em_regioes": 75,
+    "com_url": 79,
+    "total": 79
+  }
+}
