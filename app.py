@@ -6,6 +6,7 @@ Execução local:  streamlit run app.py
 from __future__ import annotations
 
 from datetime import date
+import html
 
 import pandas as pd
 import streamlit as st
@@ -195,36 +196,50 @@ topo2.download_button("📥 Exportar Planilha (.xlsx)",
                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                       type="primary", width="stretch", disabled=df.empty)
 
-aba_tab, aba_ficha, aba_status = st.tabs(["📑 Contratos", "🔎 Ficha Técnica de Fiscalização",
-                                          "🌐 Status dos Portais Consultados"])
+ABAS = ["📑 Contratos", "🔎 Ficha Técnica de Fiscalização", "🌐 Status dos Portais Consultados"]
+# seletor com estado (st.tabs volta à 1ª aba quando a página recarrega ao escolher um contrato)
+aba = st.segmented_control("Visualização", ABAS, default=ABAS[0], key="aba_ativa",
+                           label_visibility="collapsed") or ABAS[0]
 
-with aba_tab:
+if aba == ABAS[0]:
     if df.empty:
         st.warning("Nenhum contrato de Engenharia/Agronomia/Geociências encontrado com os filtros atuais. "
                    "Verifique a aba **Status dos Portais** — portais em *Consulta Manual* precisam ser "
                    "conferidos pelo link direto.", icon="🔍")
     else:
         visiveis = ["Região/Grupo", "Município", "Nº Contrato", "Data Assinatura", "Empresa Contratada", "CNPJ",
-                    "Objeto Resumido", "Valor (R$)", "Vigência", "Docs", "Link Contrato", "Link OS",
-                    "Link Empenho", "Portal Oficial"]
+                    "Objeto Resumido", "Valor (R$)", "Pago (R$)", "Saldo (R$)", "Vigência", "Docs", "Pagamentos",
+                    "Link Contrato", "Link OS", "Link Empenho", "Portal Oficial"]
+        tabela = df[visiveis].copy()
+        for col in ("Link Contrato", "Link OS", "Link Empenho", "Portal Oficial"):
+            tabela[col] = tabela[col].fillna("")  # célula vazia em vez de "None"
+        moeda = dict(format="localized")
         st.dataframe(
-            df[visiveis], width="stretch", hide_index=True, height=min(640, 42 + 35 * len(df)),
+            tabela, width="stretch", hide_index=True, height=min(640, 42 + 35 * len(df)),
             column_config={
                 "Data Assinatura": st.column_config.DateColumn(format="DD/MM/YYYY"),
-                "Valor (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
+                "Valor (R$)": st.column_config.NumberColumn("Valor (R$)", **moeda),
+                "Pago (R$)": st.column_config.NumberColumn("Pago (R$)", **moeda,
+                                                           help="Soma dos pagamentos localizados no portal"),
+                "Saldo (R$)": st.column_config.NumberColumn("Saldo (R$)", **moeda),
                 "Objeto Resumido": st.column_config.TextColumn(width="large"),
                 "Empresa Contratada": st.column_config.TextColumn(width="medium"),
                 "Docs": st.column_config.TextColumn("Status Documental", width="medium"),
+                "Pagamentos": st.column_config.TextColumn("💰 Pagamentos", width="medium",
+                                                          help="Detalhe de cada pagamento na Ficha Técnica"),
                 "Link Contrato": st.column_config.LinkColumn("📄 Contrato", display_text="Abrir contrato"),
                 "Link OS": st.column_config.LinkColumn("📋 Ordem de Serviço", display_text="Abrir OS",
-                                                       help="Vazio = OS não localizada no portal"),
-                "Link Empenho": st.column_config.LinkColumn("💰 Empenho / Pagamentos", display_text="Abrir empenho"),
+                                                       help="Vazio = OS não publicada no portal"),
+                "Link Empenho": st.column_config.LinkColumn("💰 Empenho do contrato", display_text="Abrir empenho",
+                                                            help="Página do contrato com seus empenhos. Vazio = "
+                                                                 "portal sem página própria; veja a Ficha Técnica"),
                 "Portal Oficial": st.column_config.LinkColumn("🌐 Portal", display_text="Portal"),
             })
-        st.caption("Links de Contrato/Empenho sem documento direto apontam para a área de consulta do portal. "
-                   "Células vazias em OS indicam Ordem de Serviço não localizada no portal.")
+        st.caption("**Quality:** “Abrir contrato” baixa o PDF e “Abrir empenho” abre a página do contrato com seus "
+                   "empenhos. **SCPI:** o portal não tem endereço próprio por contrato/empenho; os pagamentos à "
+                   "contratada são trazidos para a **Ficha Técnica** e “Abrir contrato” leva à área de contratos.")
 
-with aba_ficha:
+if aba == ABAS[1]:
     if df.empty:
         st.info("Nenhum contrato disponível para detalhamento.")
     else:
@@ -244,46 +259,72 @@ with aba_ficha:
         ]), unsafe_allow_html=True)
 
         b1, b2, b3, b4 = st.columns(4)
-        b1.link_button("📄 Abrir / Baixar Contrato", c["Link Contrato"] or c["Portal Oficial"] or "about:blank",
-                       width="stretch", type="primary", disabled=not (c["Link Contrato"] or c["Portal Oficial"]))
+        lk_ctr = c["Link Contrato"] or c["Portal Oficial"]
+        b1.link_button("📄 Abrir / Baixar Contrato" if c["Doc Contrato"] else "📄 Área de Contratos do Portal",
+                       lk_ctr or "about:blank", width="stretch", type="primary", disabled=not lk_ctr)
         if c["Link OS"]:
             b2.link_button("📋 Abrir Ordem de Serviço", c["Link OS"], width="stretch", type="primary")
         else:
-            b2.button("📋 OS não localizada no portal", disabled=True, width="stretch")
-        b3.link_button("💰 Empenho / Pagamentos", c["Link Empenho"] or c["Portal Oficial"] or "about:blank",
-                       width="stretch", type="primary", disabled=not (c["Link Empenho"] or c["Portal Oficial"]))
+            b2.button("📋 OS não publicada no portal", disabled=True, width="stretch")
+        if c["Link Empenho"]:
+            b3.link_button("💰 Empenhos deste Contrato", c["Link Empenho"], width="stretch", type="primary")
+        else:
+            lk_desp = c["Link Consulta Despesas"] or c["Portal Oficial"]
+            b3.link_button("💰 Consulta de Despesas (geral)", lk_desp or "about:blank", width="stretch",
+                           disabled=not lk_desp,
+                           help="O portal não tem página por empenho. Os pagamentos localizados estão abaixo.")
         b4.link_button("🌐 Portal Oficial", c["Portal Oficial"] or "about:blank", width="stretch",
                        disabled=not c["Portal Oficial"])
+
+        valor, pago, saldo = c["Valor (R$)"], c["Pago (R$)"], c["Saldo (R$)"]
+        exec_pct = (pago / valor * 100) if pd.notna(valor) and valor and pd.notna(pago) else None
+        st.markdown(styles.kpis([
+            ("Valor contratado", brl(valor), c["Vigência"] or "", ""),
+            ("Total pago", brl(pago), c["Vínculo Pagamentos"] or "—", "verde"),
+            ("Saldo contratual", brl(saldo), "valor (com aditivos) − pago", ""),
+            ("Execução financeira", f"{exec_pct:.0f}%" if exec_pct is not None else "—", "pago ÷ contratado", "amarelo"),
+        ]), unsafe_allow_html=True)
 
         e, d = st.columns([3, 2])
         with e:
             st.markdown(f'<div class="fo-card"><h4>Objeto do contrato</h4>'
-                        f'<div class="dado">{c["Objeto Completo"] or "—"}</div>'
+                        f'<div class="dado">{html.escape(c["Objeto Completo"] or "—")}</div>'
                         f'<div class="campo">Termos técnicos identificados</div>'
-                        f'<div class="dado">{c["Termos"] or "—"}</div></div>', unsafe_allow_html=True)
+                        f'<div class="dado">{c["Termos"] or "—"}</div>'
+                        f'<div class="campo">Processo</div><div class="dado">{c["Processo"] or "—"}</div></div>',
+                        unsafe_allow_html=True)
         with d:
             data_ass = c["Data Assinatura"].strftime("%d/%m/%Y") if pd.notna(c["Data Assinatura"]) else "—"
-            st.markdown(f'<div class="fo-card"><h4>Contratada e valores</h4>'
-                        f'<div class="campo">Razão social</div><div class="dado">{c["Empresa Contratada"] or "—"}</div>'
+            st.markdown(f'<div class="fo-card"><h4>Contratada e fiscalização</h4>'
+                        f'<div class="campo">Razão social</div><div class="dado">{html.escape(c["Empresa Contratada"] or "—")}</div>'
                         f'<div class="campo">CNPJ</div><div class="dado">{c["CNPJ"] or "—"}</div>'
-                        f'<div class="campo">Valor contratado</div><div class="dado"><b>{brl(c["Valor (R$)"])}</b></div>'
                         f'<div class="campo">Assinatura · Vigência</div>'
-                        f'<div class="dado">{data_ass} · {c["Vigência"] or "—"}</div></div>', unsafe_allow_html=True)
+                        f'<div class="dado">{data_ass} · {c["Vigência"] or "—"}</div>'
+                        f'<div class="campo">Fiscal do contrato</div><div class="dado">{html.escape(c["Fiscal"] or "Não informado no portal")}</div>'
+                        f'<div class="campo">CREA / ART do fiscal</div><div class="dado">{html.escape(c["Fiscal CREA/ART"] or "Não informado no portal")}</div>'
+                        f'</div>', unsafe_allow_html=True)
 
-        st.markdown("##### Histórico de empenhos e pagamentos")
-        emp = c["Empenhos"] or []
-        if emp:
-            st.dataframe(pd.DataFrame(emp), width="stretch", hide_index=True, column_config={
+        st.markdown("##### Empenhos e pagamentos")
+        emp = pd.DataFrame(c["Empenhos"] or [])
+        if not emp.empty:
+            emp["data"] = pd.to_datetime(emp["data"], dayfirst=True, errors="coerce")
+            ordem = [x for x in ["data", "numero", "liquidacao", "ordem_pagamento", "nota_fiscal", "valor_pago",
+                                 "vinculo", "historico"] if x in emp.columns and emp[x].notna().any()]
+            st.dataframe(emp[ordem], width="stretch", hide_index=True, column_config={
                 "data": st.column_config.DateColumn("Data", format="DD/MM/YYYY"),
-                "valor_empenhado": st.column_config.NumberColumn("Empenhado", format="R$ %.2f"),
-                "valor_pago": st.column_config.NumberColumn("Pago", format="R$ %.2f"),
-                "link": st.column_config.LinkColumn("Documento", display_text="Abrir"),
-                "numero": "Nº Empenho"})
+                "numero": "Nº Empenho", "liquidacao": "Liquidação", "ordem_pagamento": "Ordem de Pagamento",
+                "nota_fiscal": "Nota Fiscal",
+                "valor_pago": st.column_config.NumberColumn("Valor pago (R$)", format="localized"),
+                "vinculo": "Vínculo", "historico": st.column_config.TextColumn("Histórico", width="large"),
+            })
+            if "vinculo" in emp.columns and (emp["vinculo"] == "Pagamento ao fornecedor (CNPJ)").any():
+                st.caption("“Pagamento ao fornecedor (CNPJ)”: pago à mesma empresa após o início da vigência, mas o "
+                           "histórico não cita este contrato. Se a empresa tiver outros contratos com o município, "
+                           "parte desses pagamentos pode ser de outro contrato.")
         else:
-            st.caption("O portal não disponibilizou empenhos vinculados a este contrato na listagem. "
-                       "Use o botão **Empenho / Pagamentos** para consultar diretamente.")
+            st.caption("Nenhum pagamento localizado no portal para este contrato no exercício.")
 
-with aba_status:
+if aba == ABAS[2]:
     if status_df.empty:
         st.info("Nenhum portal consultado.")
     else:

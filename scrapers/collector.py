@@ -27,8 +27,8 @@ from config.plataformas import (
     _raiz_transparencia, link_contratos, link_despesas,
 )
 from scrapers.keywords import classificar_objeto
-from scrapers.plataforma_quality import QualityIndisponivel, coletar_quality
-from scrapers.plataforma_scpi import coletar_scpi
+from scrapers.plataforma_quality import QualityIndisponivel, coletar_quality, enriquecer_quality
+from scrapers.plataforma_scpi import coletar_scpi, enriquecer_scpi
 from scrapers.parsers import (
     extrair_lista_json, links_para_contratos, normalizar_registro, tabelas_de_contratos,
 )
@@ -205,6 +205,11 @@ def coletar_municipio(nome: str, grupo: str, url: str, plataforma: str, ano: int
                        areas=areas, termos=termos, exercicio=int(ano),
                        link_consulta_contratos=lk_contratos, link_consulta_despesas=lk_despesas)
             contratos.append(reg)
+        # detalhes por contrato (PDF, empenhos/pagamentos, saldo, fiscais) só para o escopo técnico
+        if plataforma == SCPI:
+            enriquecer_scpi(sessao, url, contratos)
+        elif plataforma == QUALITY:
+            enriquecer_quality(sessao, url, contratos)
         resultado["contratos"] = contratos
         if not contratos:
             resultado.update(status=ST_SEM_ENG,

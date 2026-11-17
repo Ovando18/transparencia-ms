@@ -16,6 +16,7 @@ OBJETO_COMPLETO, LICIT, PROCLIC, RESPON, CONTRATONUM...
 from __future__ import annotations
 
 import json
+import re
 
 import requests
 from bs4 import BeautifulSoup
@@ -104,3 +105,82 @@ def coletar_scpi(sessao: requests.Session, url: str, ano: int) -> list[dict]:
             pass
         regs.append(normalizar_scpi(it))
     return regs
+
+
+# ---------------------------------------------------------------------------
+# Pagamentos (SCPI não tem URL por empenho: os pagamentos são trazidos ao painel)
+# ---------------------------------------------------------------------------
+def exportar_pagamentos_json(sessao: requests.Session, url: str) -> list[dict]:
+    """Exporta 'Despesas por Pagamento/Empenho' do exercício já selecionado na sessão."""
+    raiz = _raiz_transparencia(url)
+    r = sessao.get(f"{raiz}/DespesasPorPagamentoEmpenho.aspx", timeout=TIMEOUT_EXPORT)
+    r.raise_for_status()
+    if "btnExportarJSON" not in r.text:
+        return []
+    form = _campos_form(r.text)
+    form["btnExportarJSON.x"] = "8"
+    form["btnExportarJSON.y"] = "8"
+    r = sessao.post(f"{raiz}/DespesasPorPagamentoEmpenho.aspx", data=form, timeout=TIMEOUT_EXPORT)
+    r.raise_for_status()
+    if "json" not in r.headers.get("Content-Type", ""):
+        return []
+    dados = json.loads(r.content.decode("utf-8-sig"))
+    return dados if isinstance(dados, list) else []
+
+
+def _digitos(s) -> str:
+    return re.sub(r"\D", "", str(s or ""))
+
+
+def _padroes_vinculo(reg: dict) -> list[re.Pattern]:
+    pads = []
+    for campo, rotulo in (("numero", r"contrato"), ("processo", r"(?:licita\w*|processo)")):
+        m = re.match(r"^\s*0*(\d+)\s*/\s*(\d{2,4})\s*$", str(reg.get(campo) or ""))
+        if m:
+            num, ano = m.group(1), m.group(2)[-2:]
+            pads.append(re.compile(rf"{rotulo}[^0-9]{{0,25}}0*{num}\s*/\s*(?:20)?{ano}\b", re.I))
+    return pads
+
+
+def vincular_pagamentos(contratos: list[dict], pagamentos: list[dict]) -> None:
+    por_cnpj: dict[str, list[dict]] = {}
+    for p in pagamentos:
+        por_cnpj.setdefault(_digitos(p.get("CPFCNPJ")), []).append(p)
+    for reg in contratos:
+        lista = por_cnpj.get(_digitos(reg.get("cnpj")), [])
+        inicio = reg.get("vigencia_inicio") or reg.get("data_assinatura")
+        pads = _padroes_vinculo(reg)
+        emp = []
+        for p in lista:
+            d = parse_data(p.get("DTLAN"))
+            if inicio and d and d < inicio:
+                continue
+            hist = str(p.get("PRODU") or "")
+            emp.append({
+                "numero": None,
+                "data": d,
+                "valor_pago": p.get("VALOR"),
+                "ordem_pagamento": p.get("ORDPG"),
+                "nota_fiscal": p.get("NOTA_FISCAL"),
+                "historico": hist,
+                "vinculo": ("Vinculado ao contrato" if any(x.search(hist) for x in pads)
+                            else "Pagamento ao fornecedor (CNPJ)"),
+            })
+        emp.sort(key=lambda e: e["data"] or parse_data("01/01/1900"), reverse=True)
+        reg["empenhos"] = emp
+        vinc = [e for e in emp if e["vinculo"] == "Vinculado ao contrato"]
+        base = vinc or emp
+        reg["valor_pago"] = round(sum(e["valor_pago"] or 0 for e in base), 2) if base else 0.0
+        reg["vinculo_pagamentos"] = ("Histórico cita o contrato/processo" if vinc
+                                     else ("Pelo CNPJ da contratada" if emp else "Sem pagamentos no exercício"))
+        if reg.get("valor") is not None and base:
+            reg["saldo"] = round(reg["valor"] - reg["valor_pago"], 2)
+
+
+def enriquecer_scpi(sessao: requests.Session, url: str, contratos: list[dict]) -> None:
+    if not contratos:
+        return
+    try:
+        vincular_pagamentos(contratos, exportar_pagamentos_json(sessao, url))
+    except (requests.RequestException, ValueError):
+        pass

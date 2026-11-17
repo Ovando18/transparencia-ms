@@ -79,3 +79,53 @@ def coletar_quality(sessao: requests.Session, url: str, ano: int) -> list[dict]:
         }
         regs.append(finalizar(reg))
     return regs
+
+
+def detalhar_contrato_quality(sessao: requests.Session, url: str, reg: dict) -> dict:
+    """Completa um contrato com PDF, empenhos/pagamentos, saldo e fiscais (CREA/ART)."""
+    entidade = entidade_da_url(url)
+    chave = (reg.get("link_contrato") or "").rsplit("/", 1)[-1]
+    if not chave:
+        return reg
+    r = sessao.get(f"{HOST}/api/v1/contratos/{entidade}/contrato/{chave}", timeout=TIMEOUT,
+                   headers={"Accept": "application/json"})
+    if not r.ok:
+        return reg
+    d = r.json()
+    pagina = reg.get("link_contrato")
+    arq = d.get("arquivo") or {}
+    if arq.get("disponivel") and arq.get("downloadUrl"):
+        reg["link_contrato"] = arq["downloadUrl"]           # PDF do contrato
+    reg["link_empenho"] = pagina                              # página do contrato (aba de empenhos)
+    reg["link_pagina_contrato"] = pagina
+    reg["valor_atualizado"] = d.get("valorAtualizado")
+    reg["valor_pago"] = d.get("totalEmpenho")          # "Total pago" no portal
+    reg["saldo_empenhado_a_pagar"] = d.get("saldoAPagar")
+    base = d.get("valorAtualizado") or reg.get("valor")
+    if base is not None and reg["valor_pago"] is not None:
+        reg["saldo"] = round(float(base) - float(reg["valor_pago"]), 2)  # saldo contratual
+    fiscais = d.get("fiscais") or []
+    if fiscais:
+        reg["fiscal_gestor"] = "; ".join(
+            f"{f.get('nome', '')} ({f.get('tipo', '')})".replace(" ()", "") for f in fiscais)
+        reg["fiscal_crea_art"] = "; ".join(
+            f"{f.get('nome', '')}: CREA {f.get('crea') or '—'} / ART {f.get('art') or '—'}" for f in fiscais)
+    reg["empenhos"] = [{
+        "numero": e.get("empenho"),
+        "data": e.get("data"),
+        "valor_pago": e.get("valor"),
+        "liquidacao": e.get("liquidacao"),
+        "ordem_pagamento": e.get("op"),
+        "historico": e.get("historico"),
+        "vinculo": "Vinculado ao contrato",
+    } for e in d.get("empenhos") or []]
+    reg["vinculo_pagamentos"] = "Portal (por contrato)"
+    return reg
+
+
+def enriquecer_quality(sessao: requests.Session, url: str, contratos: list[dict]) -> None:
+    for reg in contratos:
+        try:
+            detalhar_contrato_quality(sessao, url, reg)
+        except (requests.RequestException, ValueError):
+            continue

@@ -10,12 +10,18 @@ AZUL, VERDE, AMARELO, BORDA = "#004B87", "#007A33", "#F2A900", "#DCE3EC"
 
 _COLS_EXPORT = [
     "Região/Grupo", "Município", "Nº Contrato", "Data Assinatura", "Empresa Contratada", "CNPJ",
-    "Objeto Completo", "Valor (R$)", "Vigência", "Área Técnica", "Plataforma",
+    "Objeto Completo", "Valor (R$)", "Pago (R$)", "Saldo (R$)", "Vigência", "Área Técnica", "Plataforma",
+    "Processo", "Fiscal", "Fiscal CREA/ART", "Vínculo Pagamentos",
     "Link Contrato", "Link OS", "Link Empenho", "Portal Oficial",
 ]
+_MOEDA = {"Valor (R$)", "Pago (R$)", "Saldo (R$)"}
+_SEM_LINK = {"Link OS": "OS não publicada no portal",
+             "Link Empenho": "Sem página própria — ver aba Pagamentos_Empenhos"}
 _LARGURAS = {"Região/Grupo": 16, "Município": 22, "Nº Contrato": 14, "Data Assinatura": 14,
              "Empresa Contratada": 38, "CNPJ": 20, "Objeto Completo": 70, "Valor (R$)": 18,
              "Vigência": 24, "Área Técnica": 30, "Plataforma": 14, "Link Contrato": 16,
+             "Pago (R$)": 18, "Saldo (R$)": 18, "Processo": 14, "Fiscal": 30, "Fiscal CREA/ART": 30,
+             "Vínculo Pagamentos": 30,
              "Link OS": 16, "Link Empenho": 16, "Portal Oficial": 16}
 _ROTULO_LINK = {"Link Contrato": "📄 Contrato", "Link OS": "📋 Ordem de Serviço",
                 "Link Empenho": "💰 Empenho", "Portal Oficial": "🌐 Portal"}
@@ -58,8 +64,8 @@ def gerar_excel(df: pd.DataFrame, status: pd.DataFrame | None = None, exercicio:
                     if isinstance(v, str) and v.startswith("http"):
                         ws.write_url(i, j, v, f_link, string=_ROTULO_LINK[col], tip=v)
                     else:
-                        ws.write(i, j, "Não localizado no portal", f_na)
-                elif col == "Valor (R$)":
+                        ws.write(i, j, _SEM_LINK.get(col, "Não localizado no portal"), f_na)
+                elif col in _MOEDA:
                     ws.write_number(i, j, float(v), f_moeda) if pd.notna(v) else ws.write_blank(i, j, None, f_txt)
                 elif col == "Data Assinatura":
                     if pd.notna(v):
@@ -73,9 +79,10 @@ def gerar_excel(df: pd.DataFrame, status: pd.DataFrame | None = None, exercicio:
         if len(df):
             jv = _COLS_EXPORT.index("Valor (R$)")
             ws.write(ultima + 1, jv - 1, "TOTAL", f_tot_txt)
-            col_letra = chr(ord("A") + jv)
-            ws.write_formula(ultima + 1, jv, f"=SUM({col_letra}{lin0 + 2}:{col_letra}{ultima + 1})", f_tot,
-                             float(df["Valor (R$)"].fillna(0).sum()))
+            for k, col in enumerate(("Valor (R$)", "Pago (R$)", "Saldo (R$)")):
+                letra = chr(ord("A") + jv + k)
+                ws.write_formula(ultima + 1, jv + k, f"=SUM({letra}{lin0 + 2}:{letra}{ultima + 1})", f_tot,
+                                 float(df[col].fillna(0).sum()))
         ws.autofilter(lin0, 0, max(ultima, lin0), len(_COLS_EXPORT) - 1)
         ws.freeze_panes(lin0 + 1, 2)
 
@@ -127,7 +134,40 @@ def gerar_excel(df: pd.DataFrame, status: pd.DataFrame | None = None, exercicio:
         ws2.write_number(lin, 4, int(resumo["doc"].sum()), f_tot_txt)
         ws2.freeze_panes(3, 0)
 
-        # ---------------- Aba 3 (diagnóstico) ----------------
+        # ---------------- Aba 3 (pagamentos/empenhos) ----------------
+        ws4 = wb.add_worksheet("Pagamentos_Empenhos")
+        cab4 = ["Município", "Nº Contrato", "Empresa Contratada", "CNPJ", "Data", "Nº Empenho", "Liquidação",
+                "Ordem de Pagamento", "Nota Fiscal", "Valor Pago (R$)", "Vínculo", "Histórico"]
+        larg4 = [20, 12, 34, 20, 12, 12, 12, 14, 12, 16, 28, 90]
+        for j, (c4, w4) in enumerate(zip(cab4, larg4)):
+            ws4.write(0, j, c4, f_cab)
+            ws4.set_column(j, j, w4)
+        lin4 = 1
+        for _, row in df.iterrows():
+            for e in row.get("Empenhos") or []:
+                dt = pd.to_datetime(e.get("data"), dayfirst=True, errors="coerce")
+                vals = [row["Município"], row["Nº Contrato"], row["Empresa Contratada"], row["CNPJ"]]
+                for j, v in enumerate(vals):
+                    ws4.write(lin4, j, str(v or ""), f_txt)
+                if pd.notna(dt):
+                    ws4.write_datetime(lin4, 4, dt.to_pydatetime(), f_data)
+                else:
+                    ws4.write_blank(lin4, 4, None, f_txt)
+                for j, k in ((5, "numero"), (6, "liquidacao"), (7, "ordem_pagamento"), (8, "nota_fiscal")):
+                    v = e.get(k)
+                    ws4.write(lin4, j, "" if v is None else str(v), f_txt)
+                vp = e.get("valor_pago")
+                if vp is not None:
+                    ws4.write_number(lin4, 9, float(vp), f_moeda)
+                else:
+                    ws4.write_blank(lin4, 9, None, f_txt)
+                ws4.write(lin4, 10, e.get("vinculo") or "", f_txt)
+                ws4.write(lin4, 11, e.get("historico") or "", f_wrap)
+                lin4 += 1
+        ws4.autofilter(0, 0, max(lin4 - 1, 0), len(cab4) - 1)
+        ws4.freeze_panes(1, 0)
+
+        # ---------------- Aba 4 (diagnóstico) ----------------
         if status is not None and len(status):
             ws3 = wb.add_worksheet("Status_dos_Portais")
             cols3 = ["Região/Grupo", "Município", "Plataforma", "Status", "Detalhe",

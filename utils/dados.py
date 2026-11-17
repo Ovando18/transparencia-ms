@@ -7,11 +7,13 @@ from scrapers.keywords import AREA_TODAS, normalizar, pertence_area
 
 COLUNAS = [
     "Região/Grupo", "Município", "Nº Contrato", "Data Assinatura", "Empresa Contratada",
-    "CNPJ", "Objeto Resumido", "Valor (R$)", "Vigência", "Área Técnica", "Docs",
-    "Link Contrato", "Link OS", "Link Empenho", "Portal Oficial",
+    "CNPJ", "Objeto Resumido", "Valor (R$)", "Pago (R$)", "Saldo (R$)", "Vigência", "Área Técnica",
+    "Docs", "Pagamentos", "Link Contrato", "Link OS", "Link Empenho", "Portal Oficial",
     # colunas auxiliares (não exibidas na tabela principal)
     "Objeto Completo", "Vigência Início", "Vigência Fim", "Plataforma", "Termos",
-    "Doc Contrato", "Doc OS", "Doc Empenho", "Doc Completa", "Empenhos", "ID",
+    "Doc Contrato", "Doc OS", "Doc Empenho", "Doc Completa", "Vínculo Pagamentos", "Fiscal",
+    "Fiscal CREA/ART", "Processo", "Link Consulta Contratos", "Link Consulta Despesas",
+    "Empenhos", "ID",
 ]
 
 
@@ -33,7 +35,10 @@ def resultados_para_df(resultados: list[dict]) -> pd.DataFrame:
     linhas = []
     for res in resultados:
         for c in res.get("contratos", []):
-            dc, dos, de = bool(c.get("link_contrato")), bool(c.get("link_os")), bool(c.get("link_empenho"))
+            emp = c.get("empenhos") or []
+            dc, dos = bool(c.get("link_contrato")), bool(c.get("link_os"))
+            de = bool(emp) or bool(c.get("link_empenho"))
+            vinculo = c.get("vinculo_pagamentos") or ""
             linhas.append({
                 "Região/Grupo": c.get("grupo") or res.get("grupo"),
                 "Município": c.get("municipio") or res.get("municipio"),
@@ -43,13 +48,18 @@ def resultados_para_df(resultados: list[dict]) -> pd.DataFrame:
                 "CNPJ": c.get("cnpj") or "",
                 "Objeto Resumido": _resumir(c.get("objeto")),
                 "Valor (R$)": c.get("valor"),
+                "Pago (R$)": c.get("valor_pago"),
+                "Saldo (R$)": c.get("saldo"),
                 "Vigência": _vigencia(c.get("vigencia_inicio"), c.get("vigencia_fim")),
                 "Área Técnica": "; ".join(c.get("areas") or []),
                 "Docs": f"{'✅' if dc else '❌'} Contrato · {'✅' if dos else '❌'} OS · {'✅' if de else '❌'} Empenho",
-                # Contrato/Empenho caem para a página de consulta do portal quando não há link direto
+                "Pagamentos": (f"{len(emp)} pagamento(s) · {vinculo}" if emp
+                               else (vinculo or "Não localizados no portal")),
+                # Links ESPECÍFICOS do contrato. Sem documento direto, "Contrato" abre a área de
+                # contratos do portal; "Empenho" fica vazio (pagamentos ficam na Ficha Técnica).
                 "Link Contrato": c.get("link_contrato") or c.get("link_consulta_contratos"),
                 "Link OS": c.get("link_os"),
-                "Link Empenho": c.get("link_empenho") or c.get("link_consulta_despesas"),
+                "Link Empenho": c.get("link_empenho"),
                 "Portal Oficial": c.get("portal") or res.get("url"),
                 "Objeto Completo": c.get("objeto") or "",
                 "Vigência Início": c.get("vigencia_inicio"),
@@ -58,12 +68,19 @@ def resultados_para_df(resultados: list[dict]) -> pd.DataFrame:
                 "Termos": ", ".join(c.get("termos") or []),
                 "Doc Contrato": dc, "Doc OS": dos, "Doc Empenho": de,
                 "Doc Completa": dc and dos and de,
-                "Empenhos": c.get("empenhos") or [],
+                "Vínculo Pagamentos": vinculo,
+                "Fiscal": c.get("fiscal_gestor") or "",
+                "Fiscal CREA/ART": c.get("fiscal_crea_art") or "",
+                "Processo": str(c.get("processo") or ""),
+                "Link Consulta Contratos": c.get("link_consulta_contratos"),
+                "Link Consulta Despesas": c.get("link_consulta_despesas"),
+                "Empenhos": emp,
             })
     df = pd.DataFrame(linhas, columns=COLUNAS[:-1])
     df["ID"] = range(len(df))
     if not df.empty:
-        df["Valor (R$)"] = pd.to_numeric(df["Valor (R$)"], errors="coerce")
+        for col in ("Valor (R$)", "Pago (R$)", "Saldo (R$)"):
+            df[col] = pd.to_numeric(df[col], errors="coerce")
         df = df.sort_values(["Região/Grupo", "Município", "Data Assinatura"], na_position="last")
     return df.reset_index(drop=True)
 

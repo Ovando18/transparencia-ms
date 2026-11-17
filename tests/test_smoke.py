@@ -98,10 +98,12 @@ def test_coleta_filtros_export():
     assert len(aplicar_filtros(df, area="Agronomia/Meio Ambiente")) == 0
     xlsx = gerar_excel(df, status_para_df(res), 2026)
     wb = openpyxl.load_workbook(io.BytesIO(xlsx))
-    assert wb.sheetnames[:2] == ["Contratos_Engenharia_MS", "Resumo_por_Municipio"]
+    assert wb.sheetnames[:3] == ["Contratos_Engenharia_MS", "Resumo_por_Municipio", "Pagamentos_Empenhos"]
     ws = wb["Contratos_Engenharia_MS"]
-    assert ws.cell(5, 8).number_format.startswith('"R$"')
-    assert ws.cell(5, 12).hyperlink is not None
+    cab = {ws.cell(4, j).value: j for j in range(1, ws.max_column + 1)}
+    assert ws.cell(5, cab["Valor (R$)"]).number_format.startswith('"R$"')
+    assert ws.cell(5, cab["Link Contrato"]).hyperlink is not None
+    assert ws.cell(5, cab["Link Empenho"]).hyperlink is not None
 
 
 def test_filtro_falsos_positivos():
@@ -111,7 +113,13 @@ def test_filtro_falsos_positivos():
                 "Credenciamento de agentes culturais para apresentações artísticas",
                 "Aquisição de capacete para motocicleta visando ampliação da frota",
                 "Confecção de troféus e medalhas para os projetos esportivos",
-                "Agenciamento de passagens rodoviárias intermunicipais"]:
+                "Agenciamento de passagens rodoviárias intermunicipais",
+                "Credenciamento para contratação pessoa física e jurídica para a prestação de serviços médicos "
+                "destinados à manutenção e ampliação da rede",
+                "Fornecimento de livros paradidáticos, detentora de exclusividade de comercialização das obras",
+                "Manutenção de roçadeiras para atender a Secretaria Municipal de Obras",
+                "Fornecimento de massa asfáltica para aplicação a frio",
+                "Aquisição de insumos e materiais de construção"]:
         assert not classificar_objeto(txt)[0], txt
     for txt in ["Execução de obra de pavimentação asfáltica e drenagem",
                 "Serviços de manutenção preventiva e corretiva de elevadores",

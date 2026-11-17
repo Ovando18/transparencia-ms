@@ -101,8 +101,25 @@ TERMOS_EXCLUSAO = [
     "iluminacao natalina", "decoracao natalina", "zero rodovia", "zero km", "frota",
 ]
 
+# Exclusão ABSOLUTA: descarta mesmo com termo forte (ex.: "obras didáticas", "gêneros ... engenharia")
+TERMOS_EXCLUSAO_ABSOLUTA = [
+    "livro*", "isbn", "paradidatic*", "didatic*", "literari*", "protetor solar", "uniforme*",
+    "genero* alimenticio*", "medicamento*", "servicos medicos", "servico medico",
+    "credenciamento para contratacao pessoa fisica", "desinsetizacao", "desratizacao",
+    "dedetizacao", "assessoria estrategica", "transferencias voluntarias", "captacao de recursos",
+]
+
 # Expressões removidas do texto antes da análise (falsos gatilhos)
-EXPRESSOES_NEUTRAS = [r"mao[\s-]+de[\s-]+obra", r"engenharia de trafego"]
+EXPRESSOES_NEUTRAS = [
+    r"mao[\s-]+de[\s-]+obra", r"engenharia de trafego",
+    r"secretaria\s+(?:municipal\s+)?de\s+obras(?:\s*(?:,|e)\s*[a-z]+(?:\s+[a-z]+){0,3})?",
+    r"secretaria\s+(?:municipal\s+)?de\s+infraestrutura(?:\s+[a-z]+){0,4}",
+]
+
+# Compra de material/equipamento SEM serviço de engenharia associado não é escopo Crea
+_RE_COMPRA = re.compile(r"\b(aquisicao|fornecimento|compra)\b")
+_RE_SERVICO = re.compile(r"\b(execucao|instalacao|instalar|implantacao|obras? de|servicos? de engenharia|"
+                         r"construcao de|reforma d|elaboracao|manutencao (?:preventiva|corretiva))")
 
 # Objetos de pura aquisição: termos fracos não bastam (salvo se houver instalação/execução)
 INICIO_AQUISICAO = ("aquisicao", "compra", "fornecimento", "registro de precos para aquisicao")
@@ -149,6 +166,12 @@ def classificar_objeto(objeto: object) -> tuple[bool, list[str], list[str]]:
     fortes = _achados(txt, AREAS_TECNICAS)
     fracos = _achados(txt, TERMOS_FRACOS)
     excluido = _tem(txt, TERMOS_EXCLUSAO)
+
+    if _tem(txt, TERMOS_EXCLUSAO_ABSOLUTA):
+        return False, [], []
+    compra = _RE_COMPRA.search(txt[:160])
+    if compra and not _RE_SERVICO.search(txt):
+        return False, [], []
 
     if fortes:
         # termo forte isolado + exclusão (ex.: "passagens rodoviárias") -> descarta,
