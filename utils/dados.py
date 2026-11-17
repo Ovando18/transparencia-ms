@@ -52,7 +52,7 @@ def resultados_para_df(resultados: list[dict]) -> pd.DataFrame:
                 "Saldo (R$)": c.get("saldo"),
                 "Vigência": _vigencia(c.get("vigencia_inicio"), c.get("vigencia_fim")),
                 "Área Técnica": "; ".join(c.get("areas") or []),
-                "Docs": f"{'✅' if dc else '❌'} Contrato · {'✅' if dos else '❌'} OS · {'✅' if de else '❌'} Empenho",
+                "Docs": f"{'✅' if dc else '❌'} Contrato · {'✅' if de else '❌'} Empenho · {'✅' if dos else '➖'} OS",
                 "Pagamentos": (f"{len(emp)} pagamento(s) · {vinculo}" if emp
                                else (vinculo or "Não localizados no portal")),
                 # Links ESPECÍFICOS do contrato. Sem documento direto, "Contrato" abre a área de
@@ -67,7 +67,7 @@ def resultados_para_df(resultados: list[dict]) -> pd.DataFrame:
                 "Plataforma": c.get("plataforma") or res.get("plataforma"),
                 "Termos": ", ".join(c.get("termos") or []),
                 "Doc Contrato": dc, "Doc OS": dos, "Doc Empenho": de,
-                "Doc Completa": dc and dos and de,
+                "Doc Completa": dc and de,  # OS é opcional (raramente publicada nos portais)
                 "Vínculo Pagamentos": vinculo,
                 "Fiscal": c.get("fiscal_gestor") or "",
                 "Fiscal CREA/ART": c.get("fiscal_crea_art") or "",

@@ -106,7 +106,8 @@ with st.sidebar:
     valor_min = c1.number_input("Valor mín. (R$)", min_value=0.0, step=10000.0, format="%.2f")
     valor_max = c2.number_input("Valor máx. (R$)", min_value=0.0, step=10000.0, format="%.2f",
                                 help="0 = sem limite")
-    so_doc = st.checkbox("Somente documentação completa (Contrato + OS + Empenho)")
+    so_doc = st.checkbox("Somente documentação completa (Contrato + Empenho)",
+                         help="A Ordem de Serviço é exibida quando o portal a publica, mas não é exigida.")
 
     with st.expander("⚙️ Opções avançadas"):
         verificar_ssl = not st.toggle("Aceitar portais com certificado SSL inválido", value=False,
@@ -176,7 +177,7 @@ st.markdown(styles.kpis([
     ("Valor global contratado", brl(df["Valor (R$)"].sum()) if len(df) else "R$ 0,00",
      f"Exercício {ss.exercicio_coletado or exercicio}", "verde"),
     ("Municípios consultados", str(n_mun), f"{n_online} com coleta automática" if n_mun else "—", ""),
-    ("Com documentação anexa", f"{pct_doc:.0f}%".replace(".", ","), "Contrato + OS + Empenho", "amarelo"),
+    ("Com documentação anexa", f"{pct_doc:.0f}%".replace(".", ","), "Contrato + Empenho (OS opcional)", "amarelo"),
 ]), unsafe_allow_html=True)
 
 if resultados is None:
