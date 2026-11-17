@@ -49,12 +49,13 @@ tests/test_smoke.py            # testes offline (portal HTTP simulado)
 
 | Plataforma | Municípios | Coleta | Como funciona |
 |---|---|---|---|
-| **Fiorilli SCPI** | 35 | ✅ Automática | `scrapers/plataforma_scpi.py`: sessão ASP.NET, troca de exercício e botão **Exportar JSON** da página `InformacoesContratos.aspx` (todos os contratos do ano). Testado em Corumbá: 394 contratos de 2026, 22 de engenharia. |
+| **Fiorilli SCPI** | 39 (inclui Ponta Porã, Ivinhema, Itaporã e Nova Alvorada do Sul, em domínio próprio) | ✅ Automática | `scrapers/plataforma_scpi.py`: sessão ASP.NET, troca de exercício e botão **Exportar JSON** da página `InformacoesContratos.aspx` (todos os contratos do ano). Testado em Corumbá: 394 contratos de 2026, 22 de engenharia. |
 | **Quality Sistemas** | 9 | ✅ Automática | `scrapers/plataforma_quality.py`: API `/api/v1/contratos/{entidade}/{ano}?mes=0` com cookie de sessão. Filtra só `CONTRATO PRINCIPAL`. Link direto por contrato. Testado: 7 de 9 coletados. Camapuã e Caracol estavam fora do ar na integração da própria Quality. |
 
 **Empenhos e pagamentos por contrato:**
 - **Quality:** o detalhe de cada contrato traz o PDF do contrato (“Abrir contrato”), a página do contrato com seus empenhos (“Abrir empenho”), a lista de empenhos (nº, liquidação, ordem de pagamento, valor), o total pago, o saldo e os fiscais (com campos CREA/ART).
 - **SCPI:** o portal não tem endereço próprio por contrato ou empenho (tudo abre em janelas internas). O painel exporta os pagamentos do exercício (*Despesas por Pagamento/Empenho*) e liga cada pagamento ao contrato pelo **CNPJ da contratada**, a partir do início da vigência. Fica marcado como **“Vinculado ao contrato”** quando o histórico cita o nº do contrato ou o processo licitatório. Os pagamentos aparecem na Ficha Técnica e na aba `Pagamentos_Empenhos` do Excel.
+| **Elotech Oxy** | detectado na coleta (ex.: Naviraí) | ✅ Automática | `scrapers/plataforma_elotech.py`: API pública `/portaltransparencia-api` (contratos, PDF, fiscais e empenhos do ano). O site da prefeitura que aponta para o Oxy é reconhecido automaticamente. Cada empenho tem link próprio no portal. |
 | **Betha Cloud** | 13 | 🔜 Consulta Manual | API `api.transparencia.betha.cloud` com token OAuth anônimo e Dados Abertos assíncronos. Integração em desenvolvimento. |
 | **Betha e-Gov** | 3 | ⚠️ Tentativa HTML | O servidor recusa conexões de IPs fora do Brasil. |
 | **Megasoft / CR2 / sites próprios** | 19 | ⚠️ Tentativa HTML | Leitor genérico de tabelas HTML; cai em Consulta Manual quando a listagem é dinâmica. |

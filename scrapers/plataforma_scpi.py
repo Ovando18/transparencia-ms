@@ -96,6 +96,11 @@ def normalizar_scpi(item: dict) -> dict:
 def coletar_scpi(sessao: requests.Session, url: str, ano: int) -> list[dict]:
     """Contratos CELEBRADOS no exercício (campo ANO == ano)."""
     itens = exportar_contratos_json(sessao, url, ano)
+    # quantos contratos (do ano e anteriores ainda listados) cada CNPJ tem com o município
+    por_cnpj: dict[str, int] = {}
+    for it in itens:
+        d = _digitos(it.get("INSMF"))
+        por_cnpj[d] = por_cnpj.get(d, 0) + 1
     regs = []
     for it in itens:
         try:
@@ -103,7 +108,9 @@ def coletar_scpi(sessao: requests.Session, url: str, ano: int) -> list[dict]:
                 continue
         except (TypeError, ValueError):
             pass
-        regs.append(normalizar_scpi(it))
+        reg = normalizar_scpi(it)
+        reg["contratos_mesmo_cnpj"] = por_cnpj.get(_digitos(it.get("INSMF")), 1)
+        regs.append(reg)
     return regs
 
 
@@ -169,12 +176,24 @@ def vincular_pagamentos(contratos: list[dict], pagamentos: list[dict]) -> None:
         emp.sort(key=lambda e: e["data"] or parse_data("01/01/1900"), reverse=True)
         reg["empenhos"] = emp
         vinc = [e for e in emp if e["vinculo"] == "Vinculado ao contrato"]
-        base = vinc or emp
-        reg["valor_pago"] = round(sum(e["valor_pago"] or 0 for e in base), 2) if base else 0.0
-        reg["vinculo_pagamentos"] = ("Histórico cita o contrato/processo" if vinc
-                                     else ("Pelo CNPJ da contratada" if emp else "Sem pagamentos no exercício"))
-        if reg.get("valor") is not None and base:
-            reg["saldo"] = round(reg["valor"] - reg["valor_pago"], 2)
+        n_ctr = int(reg.get("contratos_mesmo_cnpj") or 1)
+        reg["pago_ao_fornecedor"] = round(sum(e["valor_pago"] or 0 for e in emp), 2)
+        if vinc:
+            base, rotulo = vinc, "Histórico cita o contrato/processo"
+        elif emp and n_ctr <= 1:
+            base, rotulo = emp, "Pelo CNPJ (único contrato da empresa)"
+        elif emp:
+            base, rotulo = [], f"Empresa com {n_ctr} contratos: pagamentos não atribuídos"
+        else:
+            base, rotulo = [], "Sem pagamentos no exercício"
+        reg["vinculo_pagamentos"] = rotulo
+        if base:
+            reg["valor_pago"] = round(sum(e["valor_pago"] or 0 for e in base), 2)
+            if reg.get("valor") is not None:
+                reg["saldo"] = round(reg["valor"] - reg["valor_pago"], 2)
+        else:
+            reg["valor_pago"] = 0.0 if not emp else None
+            reg["saldo"] = reg.get("valor") if not emp else None
 
 
 def enriquecer_scpi(sessao: requests.Session, url: str, contratos: list[dict]) -> None:

@@ -127,6 +127,20 @@ with st.sidebar:
 # ===========================================================================
 # COLETA
 # ===========================================================================
+# ---------------------------------------------------------------------------
+# Link direto para a Ficha de um contrato: ?mun=<município>&ano=<ano>&ct=<nº contrato>
+# (usado em "Abrir empenho" quando o portal não tem página própria por empenho)
+# ---------------------------------------------------------------------------
+_qp = st.query_params
+_alvo = (_qp.get("mun"), _qp.get("ano"), _qp.get("ct"))
+if all(_alvo) and ss.get("deep_link_feito") != _alvo:
+    _m = cfg.info_municipio(_alvo[0])
+    if _m:
+        selecionados, exercicio, pesquisar = [_m], int(_alvo[1]), True
+        ss.ficha_alvo = (_alvo[0], _alvo[2])
+        ss.aba_ativa = "🔎 Ficha Técnica de Fiscalização"
+    ss.deep_link_feito = _alvo
+
 if pesquisar and selecionados:
     total = len(selecionados)
     with st.status(f"Consultando {total} portal(is) da transparência…", expanded=True) as caixa:
@@ -212,6 +226,16 @@ if aba == ABAS[0]:
                     "Objeto Resumido", "Valor (R$)", "Pago (R$)", "Saldo (R$)", "Vigência", "Docs", "Pagamentos",
                     "Link Contrato", "Link OS", "Link Empenho", "Portal Oficial"]
         tabela = df[visiveis].copy()
+        try:
+            base_app = (st.context.url or "").split("?")[0]
+        except Exception:  # noqa: BLE001
+            base_app = ""
+        if base_app:
+            from urllib.parse import urlencode
+            sem_link = tabela["Link Empenho"].isna() & df["Empenhos"].map(bool)
+            tabela.loc[sem_link, "Link Empenho"] = [
+                f"{base_app}?{urlencode({'mun': r['Município'], 'ano': ss.exercicio_coletado, 'ct': r['Nº Contrato']})}"
+                for _, r in df[sem_link].iterrows()]
         for col in ("Link Contrato", "Link OS", "Link Empenho", "Portal Oficial"):
             tabela[col] = tabela[col].fillna("")  # célula vazia em vez de "None"
         moeda = dict(format="localized")
@@ -231,14 +255,15 @@ if aba == ABAS[0]:
                 "Link Contrato": st.column_config.LinkColumn("📄 Contrato", display_text="Abrir contrato"),
                 "Link OS": st.column_config.LinkColumn("📋 Ordem de Serviço", display_text="Abrir OS",
                                                        help="Vazio = OS não publicada no portal"),
-                "Link Empenho": st.column_config.LinkColumn("💰 Empenho do contrato", display_text="Abrir empenho",
-                                                            help="Página do contrato com seus empenhos. Vazio = "
-                                                                 "portal sem página própria; veja a Ficha Técnica"),
+                "Link Empenho": st.column_config.LinkColumn(
+                    "💰 Empenho do contrato", display_text="Abrir empenho",
+                    help="Quality: página do contrato no portal, com seus empenhos. SCPI (sem página por empenho "
+                         "no portal): abre a Ficha Técnica deste contrato no painel, com todos os pagamentos."),
                 "Portal Oficial": st.column_config.LinkColumn("🌐 Portal", display_text="Portal"),
             })
-        st.caption("**Quality:** “Abrir contrato” baixa o PDF e “Abrir empenho” abre a página do contrato com seus "
-                   "empenhos. **SCPI:** o portal não tem endereço próprio por contrato/empenho; os pagamentos à "
-                   "contratada são trazidos para a **Ficha Técnica** e “Abrir contrato” leva à área de contratos.")
+        st.caption("**Quality:** “Abrir contrato” baixa o PDF e “Abrir empenho” abre a página do contrato no portal. "
+                   "**SCPI:** o portal não tem endereço próprio por empenho; “Abrir empenho” abre, em nova aba, a "
+                   "**Ficha Técnica deste contrato** com os pagamentos localizados.")
 
 if aba == ABAS[1]:
     if df.empty:
@@ -247,7 +272,15 @@ if aba == ABAS[1]:
         rotulos = {int(r["ID"]): f"{r['Município']} · Nº {r['Nº Contrato'] or 's/n'} · "
                                  f"{(r['Empresa Contratada'] or 'Contratada não informada')[:45]} · "
                                  f"{brl(r['Valor (R$)'])}" for r in df.to_dict("records")}
-        sel = st.selectbox("Selecione o contrato", list(rotulos), format_func=rotulos.get)
+        ids = list(rotulos)
+        idx = 0
+        if ss.get("ficha_alvo"):
+            mun_a, ct_a = ss.ficha_alvo
+            achado = df[(df["Município"] == mun_a) & (df["Nº Contrato"] == ct_a)]
+            if not achado.empty:
+                idx = ids.index(int(achado.iloc[0]["ID"]))
+            ss.ficha_alvo = None
+        sel = st.selectbox("Selecione o contrato", ids, index=idx, format_func=rotulos.get)
         c = df[df["ID"] == sel].iloc[0]
 
         st.markdown(f"#### {c['Município']} — Contrato nº {c['Nº Contrato'] or 's/n'}")
@@ -281,7 +314,10 @@ if aba == ABAS[1]:
         exec_pct = (pago / valor * 100) if pd.notna(valor) and valor and pd.notna(pago) else None
         st.markdown(styles.kpis([
             ("Valor contratado", brl(valor), c["Vigência"] or "", ""),
-            ("Total pago", brl(pago), c["Vínculo Pagamentos"] or "—", "verde"),
+            ("Total pago", brl(pago) if pd.notna(pago) else "Não atribuído",
+             (c["Vínculo Pagamentos"] or "—") + (f" · pago à empresa no ano: {brl(c['Pago ao Fornecedor (R$)'])}"
+                                                 if pd.isna(pago) and pd.notna(c["Pago ao Fornecedor (R$)"]) else ""),
+             "verde"),
             ("Saldo contratual", brl(saldo), "valor (com aditivos) − pago", ""),
             ("Execução financeira", f"{exec_pct:.0f}%" if exec_pct is not None else "—", "pago ÷ contratado", "amarelo"),
         ]), unsafe_allow_html=True)
@@ -309,19 +345,22 @@ if aba == ABAS[1]:
         emp = pd.DataFrame(c["Empenhos"] or [])
         if not emp.empty:
             emp["data"] = pd.to_datetime(emp["data"], dayfirst=True, errors="coerce")
-            ordem = [x for x in ["data", "numero", "liquidacao", "ordem_pagamento", "nota_fiscal", "valor_pago",
-                                 "vinculo", "historico"] if x in emp.columns and emp[x].notna().any()]
+            ordem = [x for x in ["data", "numero", "liquidacao", "ordem_pagamento", "nota_fiscal", "valor_empenhado",
+                                 "valor_pago", "vinculo", "link", "historico"]
+                     if x in emp.columns and emp[x].notna().any()]
             st.dataframe(emp[ordem], width="stretch", hide_index=True, column_config={
                 "data": st.column_config.DateColumn("Data", format="DD/MM/YYYY"),
                 "numero": "Nº Empenho", "liquidacao": "Liquidação", "ordem_pagamento": "Ordem de Pagamento",
                 "nota_fiscal": "Nota Fiscal",
+                "valor_empenhado": st.column_config.NumberColumn("Empenhado (R$)", format="localized"),
                 "valor_pago": st.column_config.NumberColumn("Valor pago (R$)", format="localized"),
+                "link": st.column_config.LinkColumn("Empenho no portal", display_text="Abrir empenho"),
                 "vinculo": "Vínculo", "historico": st.column_config.TextColumn("Histórico", width="large"),
             })
             if "vinculo" in emp.columns and (emp["vinculo"] == "Pagamento ao fornecedor (CNPJ)").any():
-                st.caption("“Pagamento ao fornecedor (CNPJ)”: pago à mesma empresa após o início da vigência, mas o "
-                           "histórico não cita este contrato. Se a empresa tiver outros contratos com o município, "
-                           "parte desses pagamentos pode ser de outro contrato.")
+                st.caption("“Pagamento ao fornecedor (CNPJ)”: pago à mesma empresa após o início da vigência, sem "
+                           "citar este contrato no histórico. Só entra no **Total pago** quando a empresa tem um "
+                           "único contrato com o município; caso contrário, confira o histórico de cada pagamento.")
         else:
             st.caption("Nenhum pagamento localizado no portal para este contrato no exercício.")
 

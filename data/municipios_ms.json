@@ -1,6 +1,6 @@
 {
   "oficial": true,
-  "gerado_em": "2026-11-17T01:43:21",
+  "gerado_em": "2026-11-17T03:32:50",
   "fontes": {
     "planilha": "Transparências MS completo.xlsx",
     "pdf": "REGIÕES 2026.pdf"
@@ -51,7 +51,7 @@
           "grupo": "Região 1",
           "url": "https://transparencia.ivinhema.ms.gov.br/transparencia/",
           "fornecedor_planilha": "",
-          "plataforma": "Outros"
+          "plataforma": "SCPI"
         },
         {
           "nome": "Glória de Dourados",
@@ -256,7 +256,7 @@
           "grupo": "Região 7",
           "url": "https://transparencia.itapora.ms.gov.br/Transparencia/",
           "fornecedor_planilha": "",
-          "plataforma": "Outros"
+          "plataforma": "SCPI"
         },
         {
           "nome": "Douradina",
@@ -341,7 +341,7 @@
           "grupo": "Região 10",
           "url": "https://contabilidade.pontapora.ms.gov.br/transparencia/",
           "fornecedor_planilha": "",
-          "plataforma": "Outros"
+          "plataforma": "SCPI"
         },
         {
           "nome": "Antônio João",
@@ -381,7 +381,7 @@
           "grupo": "Região 11",
           "url": "https://transparencia.novaalvoradadosul.ms.gov.br/transparencia/",
           "fornecedor_planilha": "",
-          "plataforma": "Outros"
+          "plataforma": "SCPI"
         },
         {
           "nome": "Ribas do Rio Pardo",

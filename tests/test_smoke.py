@@ -119,12 +119,20 @@ def test_filtro_falsos_positivos():
                 "Fornecimento de livros paradidáticos, detentora de exclusividade de comercialização das obras",
                 "Manutenção de roçadeiras para atender a Secretaria Municipal de Obras",
                 "Fornecimento de massa asfáltica para aplicação a frio",
-                "Aquisição de insumos e materiais de construção"]:
+                "Aquisição de insumos e materiais de construção",
+                "Contratação de empresa para aquisição de materiais de construção civil, destinadas à manutenção preventiva",
+                "Aquisição de insumos e materiais para pintura em geral, destinados à execução de serviços",
+                "locação do lmovel em alvenaria, situado na Avenida",
+                "Concessão onerosa de direito real de uso de bem público. Solicitação da Gerência de Obras de Naviraí/MS",
+                "Registro de preços objetivando a aquisição futura de materiais empregados em tapa buracos e obras de "
+                "manutenção de vias"]:
         assert not classificar_objeto(txt)[0], txt
     for txt in ["Execução de obra de pavimentação asfáltica e drenagem",
                 "Serviços de manutenção preventiva e corretiva de elevadores",
                 "Contratação de empresa de topografia para cadastramento do perímetro",
-                "Elaboração de projeto executivo da estrutura de contenção"]:
+                "Elaboração de projeto executivo da estrutura de contenção",
+                "Aquisição e instalação de 10 estufas agrícolas tipo túnel",
+                "Serviços técnicos de manutenção preventiva e corretiva de elevador, com fornecimento de material"]:
         assert classificar_objeto(txt)[0], txt
 
 

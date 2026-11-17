@@ -42,7 +42,7 @@ AREAS_TECNICAS: dict[str, list[str]] = {
         "climatizacao", "cabeamento estruturado", "grupo gerador",
     ],
     "Agronomia/Meio Ambiente": [
-        "agronom*", "agricola", "agropecuari*", "licenciamento ambiental",
+        "agronom*", "agricola*", "agropecuari*", "licenciamento ambiental",
         "recuperacao de area degradada", "prad", "reflorestamento", "arborizacao",
         "supressao vegetal", "inventario florestal", "manejo florestal",
         "conservacao de solo", "conservacao do solo", "curva de nivel", "curvas de nivel",
@@ -99,6 +99,7 @@ TERMOS_EXCLUSAO = [
     "apresentacoes artisticas", "seguro", "material de limpeza", "kit escolar",
     "assessoria juridica", "direito", "parlamentar", "credenciamento de agentes culturais",
     "iluminacao natalina", "decoracao natalina", "zero rodovia", "zero km", "frota",
+    "locacao do imovel", "locacao do lmovel", "locacao de container*", "locacao de conteiner*",
 ]
 
 # Exclusão ABSOLUTA: descarta mesmo com termo forte (ex.: "obras didáticas", "gêneros ... engenharia")
@@ -112,11 +113,21 @@ TERMOS_EXCLUSAO_ABSOLUTA = [
 # Expressões removidas do texto antes da análise (falsos gatilhos)
 EXPRESSOES_NEUTRAS = [
     r"mao[\s-]+de[\s-]+obra", r"engenharia de trafego",
-    r"secretaria\s+(?:municipal\s+)?de\s+obras(?:\s*(?:,|e)\s*[a-z]+(?:\s+[a-z]+){0,3})?",
+    r"(?:secretaria|gerencia|departamento|diretoria|coordenadoria|superintendencia)\s+(?:municipal\s+)?"
+    r"de\s+obras(?:\s*(?:,|e)\s*[a-z]+(?:\s+[a-z]+){0,3})?",
     r"secretaria\s+(?:municipal\s+)?de\s+infraestrutura(?:\s+[a-z]+){0,4}",
 ]
 
 # Compra de material/equipamento SEM serviço de engenharia associado não é escopo Crea
+_RE_COMPRA_MATERIAL = re.compile(
+    r"(?<!com )(?<!e )\b(aquisicao|fornecimento|compra)\s+(parcelad[oa]\s+|continuad[oa]\s+|futura\s+|eventual\s+)?"
+    r"(de\s+|do\s+|da\s+)?"
+    r"(insumos?|materia(l|is)|emulsao|produtos?|pecas|ferramentas|tintas?|cimento|areia|brita|"
+    r"tubos|manilhas|equipamentos?|aparelhos?|massa asfaltica|cal\b)")
+_RE_SERVICO_FORTE = re.compile(r"\b(execucao de obras?|execucao da obra|servicos? de engenharia|"
+                               r"prestacao de servicos?|servicos tecnicos|"
+                               r"obras? de engenharia|instalacao de|aquisicao e instalacao|"
+                               r"fornecimento e instalacao|com instalacao)")
 _RE_COMPRA = re.compile(r"\b(aquisicao|fornecimento|compra)\b")
 _RE_SERVICO = re.compile(r"\b(execucao|instalacao|instalar|implantacao|obras? de|servicos? de engenharia|"
                          r"construcao de|reforma d|elaboracao|manutencao (?:preventiva|corretiva))")
@@ -171,6 +182,9 @@ def classificar_objeto(objeto: object) -> tuple[bool, list[str], list[str]]:
         return False, [], []
     compra = _RE_COMPRA.search(txt[:160])
     if compra and not _RE_SERVICO.search(txt):
+        return False, [], []
+    # compra de insumos/materiais "destinados à execução/manutenção" continua sendo compra
+    if _RE_COMPRA_MATERIAL.search(txt) and not _RE_SERVICO_FORTE.search(txt):
         return False, [], []
 
     if fortes:

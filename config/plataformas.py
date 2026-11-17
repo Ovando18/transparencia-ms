@@ -11,9 +11,10 @@ BETHA_EGOV = "Betha e-Gov"
 QUALITY = "Quality"
 MEGASOFT = "Megasoft"
 CR2 = "CR2"
+ELOTECH = "Elotech"
 OUTROS = "Outros"
 
-PLATAFORMAS = [SCPI, BETHA_CLOUD, BETHA_EGOV, QUALITY, MEGASOFT, CR2, OUTROS]
+PLATAFORMAS = [SCPI, BETHA_CLOUD, BETHA_EGOV, QUALITY, ELOTECH, MEGASOFT, CR2, OUTROS]
 
 # (regex sobre a URL em minúsculas, plataforma) – a primeira que casar vence
 _REGRAS_URL: list[tuple[str, str]] = [
@@ -22,7 +23,10 @@ _REGRAS_URL: list[tuple[str, str]] = [
     (r"fiorilli|scpi|rcmsuporte", SCPI),
     # Fiorilli SCPI em servidor próprio: http://<ip-ou-host>:<porta>/transparencia/
     (r"^https?://[^/]+:\d{2,5}/transparencia", SCPI),
+    # Fiorilli SCPI em domínio da prefeitura: https://<host>.ms.gov.br/transparencia/
+    (r"^https?://[^/]+\.ms\.gov\.br/transparencia/?(default\.aspx)?$", SCPI),
     (r"quality", QUALITY),
+    (r"oxy\.elotech", ELOTECH),
     (r"megasoft", MEGASOFT),
     (r"cr2", CR2),
 ]
@@ -68,6 +72,10 @@ def link_contratos(url: str | None, plataforma: str) -> str | None:
         return _raiz_transparencia(url) + "/Default.aspx?AcessoIndividual=lnkContratos"
     if plataforma == BETHA_EGOV and ".faces" in url:
         return re.sub(r"[^/]+\.faces", "con_contratos.faces", url, count=1)
+    if plataforma == ELOTECH:
+        m = re.search(r"(https?://[^/]+/portaltransparencia/\d+)", url)
+        if m:
+            return f"{m.group(1)}/contratos"
     if plataforma == QUALITY:
         partes = [p for p in urlparse(url).path.split("/") if p]
         if partes:
@@ -84,4 +92,8 @@ def link_despesas(url: str | None, plataforma: str) -> str | None:
         return _raiz_transparencia(url) + "/Default.aspx?AcessoIndividual=lnkDespesasPor_PagamentoEmpenho"
     if plataforma == BETHA_EGOV and ".faces" in url:
         return re.sub(r"[^/]+\.faces", "con_empenhos.faces", url, count=1)
+    if plataforma == ELOTECH:
+        m = re.search(r"(https?://[^/]+/portaltransparencia/\d+)", url)
+        if m:
+            return f"{m.group(1)}/empenhos"
     return url

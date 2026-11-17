@@ -12,7 +12,7 @@ COLUNAS = [
     # colunas auxiliares (não exibidas na tabela principal)
     "Objeto Completo", "Vigência Início", "Vigência Fim", "Plataforma", "Termos",
     "Doc Contrato", "Doc OS", "Doc Empenho", "Doc Completa", "Vínculo Pagamentos", "Fiscal",
-    "Fiscal CREA/ART", "Processo", "Link Consulta Contratos", "Link Consulta Despesas",
+    "Fiscal CREA/ART", "Processo", "Pago ao Fornecedor (R$)", "Link Consulta Contratos", "Link Consulta Despesas",
     "Empenhos", "ID",
 ]
 
@@ -72,6 +72,7 @@ def resultados_para_df(resultados: list[dict]) -> pd.DataFrame:
                 "Fiscal": c.get("fiscal_gestor") or "",
                 "Fiscal CREA/ART": c.get("fiscal_crea_art") or "",
                 "Processo": str(c.get("processo") or ""),
+                "Pago ao Fornecedor (R$)": c.get("pago_ao_fornecedor"),
                 "Link Consulta Contratos": c.get("link_consulta_contratos"),
                 "Link Consulta Despesas": c.get("link_consulta_despesas"),
                 "Empenhos": emp,

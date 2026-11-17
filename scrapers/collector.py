@@ -23,10 +23,11 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from config.plataformas import (
-    BETHA_CLOUD, BETHA_EGOV, CR2, MEGASOFT, QUALITY, SCPI,
+    BETHA_CLOUD, BETHA_EGOV, CR2, ELOTECH, MEGASOFT, QUALITY, SCPI,
     _raiz_transparencia, link_contratos, link_despesas,
 )
 from scrapers.keywords import classificar_objeto
+from scrapers.plataforma_elotech import coletar_elotech, enriquecer_elotech, localizar_portal_oxy
 from scrapers.plataforma_quality import QualityIndisponivel, coletar_quality, enriquecer_quality
 from scrapers.plataforma_scpi import coletar_scpi, enriquecer_scpi
 from scrapers.parsers import (
@@ -133,15 +134,42 @@ def _tentar_html(sessao, url: str, ano: int) -> list[dict] | None:
     return None
 
 
-def _coletar_bruto(sessao, url: str, plataforma: str, ano: int) -> list[dict]:
+ASSINATURAS_SCPI = ("scriptsjs/default.js", "fiorilli", "scpi")
+
+
+def _detectar_em_tempo_real(sessao, url: str) -> tuple[str | None, str]:
+    """Portais 'Outros' podem ser Fiorilli SCPI em domínio próprio ou um site que aponta para o Elotech Oxy.
+    Retorna (plataforma_detectada, url_efetiva)."""
+    try:
+        r = sessao.get(url, timeout=TIMEOUT)
+    except requests.RequestException:
+        return None, url
+    t = r.text.lower()
+    if sum(a in t for a in ASSINATURAS_SCPI) >= 2 and "__viewstate" in t:
+        return SCPI, url
+    oxy = localizar_portal_oxy(sessao, url) if "oxy.elotech" in t else None
+    if oxy:
+        return ELOTECH, oxy
+    return None, url
+
+
+def _coletar_bruto(sessao, url: str, plataforma: str, ano: int) -> tuple[list[dict], str, str]:
+    """Retorna (registros, plataforma_efetiva, url_efetiva)."""
+    if plataforma not in (SCPI, QUALITY, BETHA_CLOUD, BETHA_EGOV, ELOTECH):
+        det, url_det = _detectar_em_tempo_real(sessao, url)
+        if det:
+            plataforma, url = det, url_det
     if plataforma == SCPI:
-        return coletar_scpi(sessao, url, ano)
+        return coletar_scpi(sessao, url, ano), SCPI, url
     if plataforma == QUALITY:
-        return coletar_quality(sessao, url, ano)
+        return coletar_quality(sessao, url, ano), QUALITY, url
+    if plataforma == ELOTECH:
+        oxy = localizar_portal_oxy(sessao, url) or url
+        return coletar_elotech(sessao, oxy, ano), ELOTECH, oxy
     if plataforma in ENDPOINTS_JSON:
         regs = _tentar_json(sessao, ENDPOINTS_JSON[plataforma], url, ano)
         if regs is not None:
-            return regs
+            return regs, plataforma, url
     if plataforma in PLATAFORMAS_SPA:
         _get(sessao, url)  # confirma que está online
         raise ConsultaManual("Portal em aplicação dinâmica (SPA) — requer navegação no navegador.")
@@ -152,7 +180,7 @@ def _coletar_bruto(sessao, url: str, plataforma: str, ano: int) -> list[dict]:
         regs = _tentar_html(sessao, url, ano)
     if regs is None:
         raise ConsultaManual("Portal online, mas a listagem de contratos não está em HTML estático.")
-    return regs
+    return regs, plataforma, url
 
 
 def _diagnostico(exc: Exception) -> tuple[str, str]:
@@ -191,7 +219,13 @@ def coletar_municipio(nome: str, grupo: str, url: str, plataforma: str, ano: int
         return resultado
     try:
         sessao = _sessao(verificar_ssl)
-        brutos = _coletar_bruto(sessao, url, plataforma, ano)
+        brutos, plat_ef, url_ef = _coletar_bruto(sessao, url, plataforma, ano)
+        if plat_ef != plataforma or url_ef != url:   # detectado em tempo real
+            plataforma, url_coleta = plat_ef, url_ef
+            lk_contratos, lk_despesas = link_contratos(url_ef, plat_ef), link_despesas(url_ef, plat_ef)
+            resultado.update(plataforma=plat_ef, link_manual=lk_contratos, link_despesas=lk_despesas)
+        else:
+            url_coleta = url
         resultado["total_bruto"] = len(brutos)
         contratos = []
         for reg in brutos:
@@ -207,9 +241,11 @@ def coletar_municipio(nome: str, grupo: str, url: str, plataforma: str, ano: int
             contratos.append(reg)
         # detalhes por contrato (PDF, empenhos/pagamentos, saldo, fiscais) só para o escopo técnico
         if plataforma == SCPI:
-            enriquecer_scpi(sessao, url, contratos)
+            enriquecer_scpi(sessao, url_coleta, contratos)
         elif plataforma == QUALITY:
-            enriquecer_quality(sessao, url, contratos)
+            enriquecer_quality(sessao, url_coleta, contratos)
+        elif plataforma == ELOTECH:
+            enriquecer_elotech(sessao, url_coleta, ano, contratos)
         resultado["contratos"] = contratos
         if not contratos:
             resultado.update(status=ST_SEM_ENG,
