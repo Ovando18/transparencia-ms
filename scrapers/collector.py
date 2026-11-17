@@ -29,7 +29,7 @@ from config.plataformas import (
 from scrapers.keywords import classificar_objeto
 from scrapers.plataforma_elotech import coletar_elotech, enriquecer_elotech, localizar_portal_oxy
 from scrapers.plataforma_quality import QualityIndisponivel, coletar_quality, enriquecer_quality
-from scrapers.plataforma_scpi import coletar_scpi, enriquecer_scpi
+from scrapers.plataforma_scpi import PortalSemResposta, coletar_scpi, enriquecer_scpi
 from scrapers.parsers import (
     extrair_lista_json, links_para_contratos, normalizar_registro, tabelas_de_contratos,
 )
@@ -160,7 +160,9 @@ def _coletar_bruto(sessao, url: str, plataforma: str, ano: int) -> tuple[list[di
         if det:
             plataforma, url = det, url_det
     if plataforma == SCPI:
-        return coletar_scpi(sessao, url, ano), SCPI, url
+        regs = coletar_scpi(sessao, url, ano)
+        raiz = getattr(sessao, "scpi_raiz", None)
+        return regs, SCPI, (raiz + "/" if raiz and raiz not in url else url)
     if plataforma == QUALITY:
         return coletar_quality(sessao, url, ano), QUALITY, url
     if plataforma == ELOTECH:
@@ -186,6 +188,8 @@ def _coletar_bruto(sessao, url: str, plataforma: str, ano: int) -> tuple[list[di
 def _diagnostico(exc: Exception) -> tuple[str, str]:
     if isinstance(exc, ConsultaManual):
         return ST_MANUAL, str(exc)
+    if isinstance(exc, PortalSemResposta):
+        return ST_TIMEOUT, str(exc)
     if isinstance(exc, QualityIndisponivel):
         return ST_TIMEOUT, f"Quality: {exc}"
     if isinstance(exc, requests.exceptions.SSLError):

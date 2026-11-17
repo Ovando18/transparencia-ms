@@ -19,6 +19,7 @@ import json
 import re
 
 import requests
+from urllib.parse import urlparse, urlunparse
 from bs4 import BeautifulSoup
 
 from config.plataformas import _raiz_transparencia
@@ -40,10 +41,66 @@ def _exercicio_atual(html: str) -> str | None:
     return el.get("value") if el else None
 
 
-def exportar_contratos_json(sessao: requests.Session, url: str, ano: int) -> list[dict]:
+def raizes_candidatas(url: str) -> list[str]:
+    """A URL da planilha e variações usadas pelo Fiorilli SCPI (HTTP e porta 8079).
+
+    Ex.: https://pmchapadao.rcmsuporte.com.br/transparencia/ falha no HTTPS (nome não
+    reconhecido no certificado), enquanto os demais portais da mesma hospedagem
+    respondem em http://<host>:8079/transparencia."""
     raiz = _raiz_transparencia(url)
-    r = sessao.get(f"{raiz}/Default.aspx", timeout=TIMEOUT_EXPORT)
-    r.raise_for_status()
+    p = urlparse(raiz)
+    host, caminho = p.hostname or "", p.path or "/transparencia"
+    cands = [raiz]
+    if p.scheme == "https":
+        cands.append(urlunparse(("http", p.netloc, caminho, "", "", "")))
+    if p.port != 8079:
+        cands += [f"http://{host}:8079{caminho}", f"https://{host}:8079{caminho}"]
+    vistos, saida = set(), []
+    for c in cands:
+        if c not in vistos:
+            vistos.add(c)
+            saida.append(c)
+    return saida
+
+
+class PortalSemResposta(Exception):
+    """Nenhum endereço do portal respondeu; a mensagem traz o erro de cada tentativa."""
+
+
+def _motivo(exc: Exception) -> str:
+    txt = str(exc)
+    if isinstance(exc, requests.exceptions.SSLError):
+        return "erro de SSL/certificado"
+    if isinstance(exc, requests.exceptions.Timeout):
+        return "tempo esgotado"
+    if isinstance(exc, requests.HTTPError) and exc.response is not None:
+        return f"HTTP {exc.response.status_code}"
+    if "Name or service not known" in txt or "NameResolution" in txt or "getaddrinfo" in txt:
+        return "endereço inexistente (DNS)"
+    if "refused" in txt.lower():
+        return "conexão recusada"
+    if "reset" in txt.lower() or "aborted" in txt.lower():
+        return "conexão derrubada pelo servidor"
+    return "sem resposta"
+
+
+def abrir_sessao_scpi(sessao: requests.Session, url: str) -> tuple[str, requests.Response]:
+    """Abre o portal na primeira raiz que responder; guarda-a em ``sessao.scpi_raiz``."""
+    tentativas: list[str] = []
+    for i, raiz in enumerate(raizes_candidatas(url)):
+        try:
+            r = sessao.get(f"{raiz}/Default.aspx", timeout=TIMEOUT_EXPORT if i == 0 else (6, 40))
+            r.raise_for_status()
+            sessao.scpi_raiz = raiz
+            return raiz, r
+        except (requests.exceptions.SSLError, requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout, requests.HTTPError) as exc:
+            tentativas.append(f"{raiz} → {_motivo(exc)}")
+    raise PortalSemResposta("Nenhum endereço respondeu. Tentativas: " + "; ".join(tentativas))
+
+
+def exportar_contratos_json(sessao: requests.Session, url: str, ano: int) -> list[dict]:
+    raiz, r = abrir_sessao_scpi(sessao, url)
     if _exercicio_atual(r.text) != str(ano):
         form = _campos_form(r.text)
         form.update({"cmbExercicio_VI": str(ano), "cmbExercicio": str(ano), "lblExercicio": str(ano),
@@ -119,7 +176,7 @@ def coletar_scpi(sessao: requests.Session, url: str, ano: int) -> list[dict]:
 # ---------------------------------------------------------------------------
 def exportar_pagamentos_json(sessao: requests.Session, url: str) -> list[dict]:
     """Exporta 'Despesas por Pagamento/Empenho' do exercício já selecionado na sessão."""
-    raiz = _raiz_transparencia(url)
+    raiz = getattr(sessao, "scpi_raiz", None) or _raiz_transparencia(url)
     r = sessao.get(f"{raiz}/DespesasPorPagamentoEmpenho.aspx", timeout=TIMEOUT_EXPORT)
     r.raise_for_status()
     if "btnExportarJSON" not in r.text:
