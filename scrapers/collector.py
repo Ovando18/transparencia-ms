@@ -27,6 +27,8 @@ from config.plataformas import (
     _raiz_transparencia, link_contratos, link_despesas,
 )
 from scrapers.keywords import classificar_objeto
+from scrapers.plataforma_quality import QualityIndisponivel, coletar_quality
+from scrapers.plataforma_scpi import coletar_scpi
 from scrapers.parsers import (
     extrair_lista_json, links_para_contratos, normalizar_registro, tabelas_de_contratos,
 )
@@ -55,14 +57,6 @@ USER_AGENT = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like G
 
 # Endpoints JSON candidatos por plataforma. Placeholders: {raiz}, {url}, {ano}.
 ENDPOINTS_JSON: dict[str, list[str]] = {
-    SCPI: [
-        "{raiz}/VersaoJson/LicitacoesEContratos/?Listagem=Contratos&Empresa=1&Ano={ano}&MostraDadosConsolidado=False",
-        "{raiz}/VersaoJson/Contratos/?Listagem=Contratos&Empresa=1&Ano={ano}",
-    ],
-    QUALITY: [
-        "{url}/api/contratos?ano={ano}",
-        "{url}/contratos/json?exercicio={ano}",
-    ],
     MEGASOFT: [
         "{url}/api/contratos?exercicio={ano}",
     ],
@@ -82,8 +76,9 @@ class ConsultaManual(Exception):
 
 def _sessao(verificar_ssl: bool = True) -> requests.Session:
     s = requests.Session()
-    retry = Retry(total=2, backoff_factor=0.8, status_forcelist=(429, 500, 502, 503, 504),
-                  allowed_methods=("GET",))
+    # sem obedecer "Retry-After" (alguns portais pedem minutos de espera e travariam a pesquisa)
+    retry = Retry(total=1, read=0, backoff_factor=0.8, status_forcelist=(502, 504),
+                  allowed_methods=("GET",), respect_retry_after_header=False)
     s.mount("http://", HTTPAdapter(max_retries=retry))
     s.mount("https://", HTTPAdapter(max_retries=retry))
     s.headers.update({"User-Agent": USER_AGENT,
@@ -139,6 +134,10 @@ def _tentar_html(sessao, url: str, ano: int) -> list[dict] | None:
 
 
 def _coletar_bruto(sessao, url: str, plataforma: str, ano: int) -> list[dict]:
+    if plataforma == SCPI:
+        return coletar_scpi(sessao, url, ano)
+    if plataforma == QUALITY:
+        return coletar_quality(sessao, url, ano)
     if plataforma in ENDPOINTS_JSON:
         regs = _tentar_json(sessao, ENDPOINTS_JSON[plataforma], url, ano)
         if regs is not None:
@@ -159,6 +158,8 @@ def _coletar_bruto(sessao, url: str, plataforma: str, ano: int) -> list[dict]:
 def _diagnostico(exc: Exception) -> tuple[str, str]:
     if isinstance(exc, ConsultaManual):
         return ST_MANUAL, str(exc)
+    if isinstance(exc, QualityIndisponivel):
+        return ST_TIMEOUT, f"Quality: {exc}"
     if isinstance(exc, requests.exceptions.SSLError):
         return ST_BLOQUEADO, "Certificado SSL inválido ou recusado."
     if isinstance(exc, (requests.exceptions.Timeout, requests.exceptions.ConnectTimeout)):
@@ -195,7 +196,7 @@ def coletar_municipio(nome: str, grupo: str, url: str, plataforma: str, ano: int
         contratos = []
         for reg in brutos:
             d = reg.get("data_assinatura") or reg.get("vigencia_inicio")
-            if d and d.year != int(ano):
+            if not reg.get("ano_contrato") and d and d.year != int(ano):
                 continue
             eh_eng, areas, termos = classificar_objeto(reg.get("objeto"))
             if not eh_eng:

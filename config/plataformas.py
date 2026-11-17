@@ -65,9 +65,13 @@ def link_contratos(url: str | None, plataforma: str) -> str | None:
     if not url:
         return None
     if plataforma == SCPI:
-        return _raiz_transparencia(url) + "/?AcessoIndividual=lnkContratos"
+        return _raiz_transparencia(url) + "/Default.aspx?AcessoIndividual=lnkContratos"
     if plataforma == BETHA_EGOV and ".faces" in url:
         return re.sub(r"[^/]+\.faces", "con_contratos.faces", url, count=1)
+    if plataforma == QUALITY:
+        partes = [p for p in urlparse(url).path.split("/") if p]
+        if partes:
+            return f"https://web.qualitysistemas.com.br/contratos/{partes[-1]}"
     # Betha Cloud (SPA com hash), Quality, Megasoft, CR2 e demais: portal raiz
     return url
 
@@ -77,7 +81,7 @@ def link_despesas(url: str | None, plataforma: str) -> str | None:
     if not url:
         return None
     if plataforma == SCPI:
-        return _raiz_transparencia(url) + "/?AcessoIndividual=lnkDespesasPorEmpenho"
+        return _raiz_transparencia(url) + "/Default.aspx?AcessoIndividual=lnkDespesasPor_PagamentoEmpenho"
     if plataforma == BETHA_EGOV and ".faces" in url:
         return re.sub(r"[^/]+\.faces", "con_empenhos.faces", url, count=1)
     return url

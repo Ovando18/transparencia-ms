@@ -45,7 +45,17 @@ tests/test_smoke.py            # testes offline (portal HTTP simulado)
 4. Filtra pelo **exercício** e pelo **escopo técnico**. Os links de Contrato, OS e Empenho vêm de cada linha.
 5. Qualquer falha vira um **status de diagnóstico** e não interrompe a pesquisa. O fiscal recebe o link direto para a área de contratos do portal.
 
-> ⚠️ **Os endpoints internos das plataformas não são documentados publicamente e mudam entre versões.** Por isso ficam centralizados em `ENDPOINTS_JSON` e devem ser validados com os portais reais. Portais do tipo SPA (Betha Cloud) são marcados como **Consulta Manual**. Para coletá-los automaticamente, seria preciso usar um navegador headless (Playwright), que exige `packages.txt` com Chromium no Streamlit Cloud.
+### Situação por plataforma (validada nos portais reais em nov/2026)
+
+| Plataforma | Municípios | Coleta | Como funciona |
+|---|---|---|---|
+| **Fiorilli SCPI** | 35 | ✅ Automática | `scrapers/plataforma_scpi.py`: sessão ASP.NET, troca de exercício e botão **Exportar JSON** da página `InformacoesContratos.aspx` (todos os contratos do ano). Testado em Corumbá: 394 contratos de 2026, 22 de engenharia. |
+| **Quality Sistemas** | 9 | ✅ Automática | `scrapers/plataforma_quality.py`: API `/api/v1/contratos/{entidade}/{ano}?mes=0` com cookie de sessão. Filtra só `CONTRATO PRINCIPAL`. Link direto por contrato. Testado: 7 de 9 coletados. Camapuã e Caracol estavam fora do ar na integração da própria Quality. |
+| **Betha Cloud** | 13 | 🔜 Consulta Manual | API `api.transparencia.betha.cloud` com token OAuth anônimo e Dados Abertos assíncronos. Integração em desenvolvimento. |
+| **Betha e-Gov** | 3 | ⚠️ Tentativa HTML | O servidor recusa conexões de IPs fora do Brasil. |
+| **Megasoft / CR2 / sites próprios** | 19 | ⚠️ Tentativa HTML | Leitor genérico de tabelas HTML; cai em Consulta Manual quando a listagem é dinâmica. |
+
+> ⚠️ **Rede:** muitos portais SCPI são servidores das prefeituras em IP próprio e porta 8079. Alguns podem recusar acessos vindos de fora do Brasil, como os servidores do Streamlit Cloud. A aba **Status dos Portais** mostra o diagnóstico de cada um. Rodar o painel localmente, numa rede brasileira, maximiza a coleta.
 
 ## Base de municípios (arquivos oficiais)
 

@@ -104,6 +104,35 @@ def test_coleta_filtros_export():
     assert ws.cell(5, 12).hyperlink is not None
 
 
+def test_filtro_falsos_positivos():
+    """Casos reais do portal de Corumbá que NÃO são do escopo Crea."""
+    for txt in ["Contratação de serviços terceirizados de limpeza, asseio e conservação, com mão de obra",
+                "Aquisição de veículo tipo passeio, modelo hatch, zero rodovia",
+                "Credenciamento de agentes culturais para apresentações artísticas",
+                "Aquisição de capacete para motocicleta visando ampliação da frota",
+                "Confecção de troféus e medalhas para os projetos esportivos",
+                "Agenciamento de passagens rodoviárias intermunicipais"]:
+        assert not classificar_objeto(txt)[0], txt
+    for txt in ["Execução de obra de pavimentação asfáltica e drenagem",
+                "Serviços de manutenção preventiva e corretiva de elevadores",
+                "Contratação de empresa de topografia para cadastramento do perímetro",
+                "Elaboração de projeto executivo da estrutura de contenção"]:
+        assert classificar_objeto(txt)[0], txt
+
+
+def test_normalizadores_plataformas():
+    from scrapers.plataforma_quality import entidade_da_url, link_contrato
+    from scrapers.plataforma_scpi import normalizar_scpi
+    r = normalizar_scpi({"CODIGO": "0935/26", "ANO": 2026, "FORNECEDOR": "MARSOU ENGENHARIA LTDA",
+                         "VALCON": 6129800.0, "VIGENI": "2026-10-20T00:00:00", "INSMF": "01.278.335/0001-39",
+                         "VENCIMENTO_ATUAL": "2027-12-19T00:00:00", "OBJETO_COMPLETO": "Obra de drenagem"})
+    assert r["valor"] == 6129800.0 and r["data_assinatura"].isoformat() == "2026-10-20"
+    assert r["vigencia_fim"].isoformat() == "2027-12-19" and r["cnpj"] == "01.278.335/0001-39"
+    ent = entidade_da_url("https://web.qualitysistemas.com.br/portal/transparencia_publica/prefeitura_municipal_de_terenos")
+    assert ent == "prefeitura_municipal_de_terenos"
+    assert link_contrato(ent, "12/2026", "1").endswith("/contratos/prefeitura_municipal_de_terenos/contrato/12_2026_1")
+
+
 def test_arquivos_oficiais():
     """Valida a base gerada dos arquivos oficiais (se estiverem na raiz)."""
     from config.base_builder import construir_base, localizar_arquivos_fonte
